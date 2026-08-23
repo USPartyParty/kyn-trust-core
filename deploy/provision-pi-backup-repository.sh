@@ -22,8 +22,8 @@ install -d -o root -g root -m 0755 /srv/kyn-backup
 install -d -o kyn-backup -g kyn-backup -m 0700 /srv/kyn-backup/repository
 install -d -o root -g root -m 0755 /etc/ssh/authorized_keys
 printf '%s\n' "${public_key}" >/etc/ssh/authorized_keys/kyn-backup
-chown root:root /etc/ssh/authorized_keys/kyn-backup
-chmod 0600 /etc/ssh/authorized_keys/kyn-backup
+chown root:kyn-backup /etc/ssh/authorized_keys/kyn-backup
+chmod 0640 /etc/ssh/authorized_keys/kyn-backup
 
 cat >/etc/ssh/sshd_config.d/71-kyn-backup-sftp.conf <<'EOF'
 Match User kyn-backup
