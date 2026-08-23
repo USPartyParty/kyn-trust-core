@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+fail() {
+  printf 'KYN pre-activation rotation failed: %s\n' "$1" >&2
+  exit 1
+}
+
+[[ "${EUID}" -eq 0 ]] || fail "run as root"
+readonly config="${KYN_BACKUP_CONFIG:-/etc/kyn-backup/backup.conf}"
+[[ -f "${config}" ]] || fail "KYN private configuration is absent"
+set -a
+# shellcheck disable=SC1090 -- fixed root-owned configuration path
+source "${config}"
+set +a
+
+: "${KYN_BACKUP_STATE_ROOT:?KYN_BACKUP_STATE_ROOT is required}"
+: "${KYN_DEPLOY_DIR:?KYN_DEPLOY_DIR is required}"
+: "${KYN_RUNTIME_IMAGE:?KYN_RUNTIME_IMAGE is required}"
+readonly state_root="${KYN_BACKUP_STATE_ROOT}"
+readonly deploy_dir="${KYN_DEPLOY_DIR}"
+readonly compose_base="${deploy_dir}/compose.production.yml"
+readonly compose_override="${deploy_dir}/compose.gateb.yml"
+readonly compose_env="${deploy_dir}/kyn.production.env"
+readonly database_container="${KYN_DATABASE_CONTAINER:-kyn-public-beta-kyn-database-1}"
+readonly api_container="${KYN_API_CONTAINER:-kyn-public-beta-kyn-api-1}"
+readonly restore_evidence="${state_root}/operations/latest-restore.json"
+readonly rotation_id="preactivation-$(date --utc +%Y%m%dT%H%M%SZ)"
+readonly rollback_root="${state_root}/rotation-rollback/${rotation_id}"
+readonly evidence_target="${state_root}/operations/latest-rotation.json"
+
+for path in "${compose_base}" "${compose_override}" "${compose_env}" "${restore_evidence}"; do
+  [[ -f "${path}" ]] || fail "required reviewed input is absent: ${path}"
+done
+jq -e '.status == "passed" and .isolated == true and .source_database_untouched == true' \
+  "${restore_evidence}" >/dev/null || fail "accepted isolated restore evidence is absent"
+[[ "$(docker inspect --format '{{.State.Health.Status}}' "${api_container}")" == "healthy" ]] ||
+  fail "KYN API is not healthy"
+release_status="$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8090/v1/operator-release)"
+[[ "${release_status}" == "503" ]] || fail "operator release is not dark"
+counts="$(docker exec "${database_container}" psql -U kyn -d kyn -At -F '|' -c \
+  'SELECT (SELECT count(*) FROM kyn_state), (SELECT count(*) FROM kyn_commands);')"
+[[ "${counts}" == "0|0" ]] || fail "KYN state is not empty"
+image_revision="$(docker image inspect "${KYN_RUNTIME_IMAGE}" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')"
+[[ "${image_revision}" == "${KYN_BACKUP_SOURCE_REVISION}" ]] ||
+  fail "runtime image is not bound to the authorized source revision"
+
+install -d -o root -g root -m 0700 "${rollback_root}" "$(dirname "${evidence_target}")"
+systemctl stop kyn-backup.timer
+rotated=false
+rollback() {
+  if [[ "${rotated}" == "true" ]]; then
+    docker compose --env-file "${compose_env}" --file "${compose_base}" \
+      --file "${compose_override}" down >/dev/null 2>&1 || true
+    rm -rf -- "${state_root}/state" "${state_root}/secrets"
+    mv -- "${rollback_root}/state" "${state_root}/state" 2>/dev/null || true
+    mv -- "${rollback_root}/secrets" "${state_root}/secrets" 2>/dev/null || true
+    docker compose --env-file "${compose_env}" --file "${compose_base}" \
+      --file "${compose_override}" up --detach --no-build kyn-api >/dev/null 2>&1 || true
+  fi
+  systemctl start kyn-backup.timer >/dev/null 2>&1 || true
+}
+trap rollback ERR
+
+cd "${deploy_dir}"
+docker compose --env-file "${compose_env}" --file "${compose_base}" \
+  --file "${compose_override}" down
+mv -- "${state_root}/state" "${rollback_root}/state"
+mv -- "${state_root}/secrets" "${rollback_root}/secrets"
+rotated=true
+
+docker compose --env-file "${compose_env}" --file "${compose_base}" \
+  --file "${compose_override}" --profile tools run --rm --no-deps kyn-provision
+docker compose --env-file "${compose_env}" --file "${compose_base}" \
+  --file "${compose_override}" up --detach --no-build kyn-api
+
+for _ in $(seq 1 30); do
+  if [[ "$(docker inspect --format '{{.State.Health.Status}}' "${api_container}" 2>/dev/null || true)" == "healthy" ]]; then
+    break
+  fi
+  sleep 2
+done
+[[ "$(docker inspect --format '{{.State.Health.Status}}' "${api_container}")" == "healthy" ]] ||
+  fail "rotated KYN API did not become healthy"
+release_status="$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8090/v1/operator-release)"
+[[ "${release_status}" == "503" ]] || fail "rotated operator release is not dark"
+counts="$(docker exec "${database_container}" psql -U kyn -d kyn -At -F '|' -c \
+  'SELECT (SELECT count(*) FROM kyn_state), (SELECT count(*) FROM kyn_commands);')"
+[[ "${counts}" == "0|0" ]] || fail "rotated KYN state is not empty"
+
+jq -n \
+  --arg completed_at "$(date --utc +%Y-%m-%dT%H:%M:%SZ)" \
+  --arg rotation_id "${rotation_id}" \
+  --arg source_revision "${image_revision}" \
+  '{schema_version: 1, status: "passed", completed_at: $completed_at,
+    rotation_id: $rotation_id, source_revision: $source_revision,
+    precondition: {operator_release: "inactive", kyn_state: 0, kyn_commands: 0,
+      isolated_restore: "passed"},
+    result: {all_service_credentials_rotated: true, operator_release: "inactive",
+      kyn_state: 0, kyn_commands: 0, rollback_state_retained: true}}' >"${evidence_target}"
+chmod 0600 "${evidence_target}"
+rotated=false
+trap - ERR
+systemctl start kyn-backup.timer
+printf 'KYN pre-activation credentials rotated; dark empty state preserved.\n'

@@ -7,6 +7,7 @@ BACKUP_RUNNER = ROOT / "deploy" / "kyn-backup-run"
 RESTORE_RUNNER = ROOT / "deploy" / "kyn-restore-test"
 RESTORE_WRAPPER = ROOT / "deploy" / "kyn-restore-run"
 RESTORE_LATEST = ROOT / "deploy" / "kyn-restore-latest"
+ROTATION_RUNNER = ROOT / "deploy" / "kyn-rotate-preactivation"
 PI_PROVISIONER = ROOT / "deploy" / "provision-pi-backup-repository.sh"
 BACKUP_INSTALLER = ROOT / "deploy" / "install-kyn-backup.sh"
 
@@ -31,6 +32,7 @@ def test_backup_shell_contracts_are_syntax_valid() -> None:
         RESTORE_RUNNER,
         RESTORE_WRAPPER,
         RESTORE_LATEST,
+        ROTATION_RUNNER,
         PI_PROVISIONER,
         BACKUP_INSTALLER,
     ):
@@ -63,3 +65,9 @@ def test_kyn_backup_is_encrypted_separate_and_restore_tested() -> None:
     assert "/etc/kyn-backup" in installer
     assert "NOPASSWD" in installer
     assert "kyn-restore-latest" in installer
+    rotation = ROTATION_RUNNER.read_text(encoding="utf-8")
+    assert "operator release is not dark" in rotation
+    assert '[[ "${counts}" == "0|0" ]]' in rotation
+    assert "rotation-rollback" in rotation
+    assert "all_service_credentials_rotated: true" in rotation
+    assert "kyn-rotate-preactivation" in installer

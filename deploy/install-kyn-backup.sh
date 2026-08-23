@@ -31,12 +31,15 @@ install -o root -g root -m 0555 "${source_dir}/kyn-backup-run" /usr/local/libexe
 install -o root -g root -m 0555 "${source_dir}/kyn-restore-test" /usr/local/libexec/kyn/kyn-restore-test
 install -o root -g root -m 0555 "${source_dir}/kyn-restore-run" /usr/local/sbin/kyn-restore-run
 install -o root -g root -m 0555 "${source_dir}/kyn-restore-latest" /usr/local/sbin/kyn-restore-latest
+install -o root -g root -m 0555 "${source_dir}/kyn-rotate-preactivation" /usr/local/sbin/kyn-rotate-preactivation
 install -o root -g root -m 0644 "${source_dir}/kyn-backup.service" /etc/systemd/system/kyn-backup.service
 install -o root -g root -m 0644 "${source_dir}/kyn-backup.timer" /etc/systemd/system/kyn-backup.timer
 readonly sudoers_file="/etc/sudoers.d/90-kyn-backup-operations"
 printf '%s ALL=(root) NOPASSWD: /usr/bin/systemctl start kyn-backup.service\n' \
   "${operator_user}" >"${sudoers_file}"
 printf '%s ALL=(root) NOPASSWD: /usr/local/sbin/kyn-restore-latest\n' \
+  "${operator_user}" >>"${sudoers_file}"
+printf '%s ALL=(root) NOPASSWD: /usr/local/sbin/kyn-rotate-preactivation\n' \
   "${operator_user}" >>"${sudoers_file}"
 chown root:root "${sudoers_file}"
 chmod 0440 "${sudoers_file}"
