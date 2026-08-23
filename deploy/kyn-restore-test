@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+fail() {
+  printf 'KYN restore test failed: %s\n' "$1" >&2
+  exit 1
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || fail "missing command: $1"
+}
+
+[[ "${EUID}" -eq 0 ]] || fail "run as root"
+[[ "$#" -eq 1 ]] || fail "usage: $0 RESTIC_SNAPSHOT_ID"
+readonly snapshot_id="$1"
+[[ "${snapshot_id}" =~ ^[0-9a-f]{64}$ ]] || fail "snapshot ID must be a full Restic ID"
+umask 077
+for command in date docker find jq mktemp mv restic rm tar; do
+  require_command "${command}"
+done
+
+: "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY is required}"
+: "${RESTIC_PASSWORD_FILE:?RESTIC_PASSWORD_FILE is required}"
+: "${RESTIC_SFTP_ARGS:?RESTIC_SFTP_ARGS is required}"
+readonly evidence_target="${KYN_RESTORE_EVIDENCE_TARGET:-/srv/aiwi-services/kyn/operations/latest-restore.json}"
+readonly postgres_image="${KYN_RESTORE_POSTGRES_IMAGE:-pgvector/pgvector@sha256:18d16372b8406bb38a9f94cbff15d125c463d71fde2770aa8b5c64bfcc1578ee}"
+readonly restore_root="$(mktemp -d /tmp/kyn-restore.XXXXXX)"
+readonly container="kyn-restore-${RANDOM}-${RANDOM}"
+readonly evidence_file="$(mktemp "$(dirname "${evidence_target}")/.latest-restore.XXXXXX")"
+cleanup() {
+  docker rm --force "${container}" >/dev/null 2>&1 || true
+  rm -rf -- "${restore_root}"
+  rm -f -- "${evidence_file}"
+}
+trap cleanup EXIT
+
+export RESTIC_REPOSITORY RESTIC_PASSWORD_FILE
+readonly -a restic_options=(--option "sftp.args=${RESTIC_SFTP_ARGS}")
+restic "${restic_options[@]}" snapshots --json | jq -e \
+  --arg snapshot_id "${snapshot_id}" \
+  'any(.[]; .id == $snapshot_id and (.tags | index("kyn")) != null and (.tags | index("fla")) != null)' >/dev/null ||
+  fail "snapshot is absent or does not carry KYN/FLA tags"
+restic "${restic_options[@]}" restore "${snapshot_id}" --target "${restore_root}" >/dev/null
+
+mapfile -t dumps < <(find "${restore_root}" -type f -name kyn.dump -print)
+mapfile -t manifests < <(find "${restore_root}" -type f -name manifest.json -print)
+mapfile -t secret_archives < <(find "${restore_root}" -type f -name kyn-service-secrets.tar -print)
+[[ "${#dumps[@]}" -eq 1 && "${#manifests[@]}" -eq 1 && "${#secret_archives[@]}" -eq 1 ]] ||
+  fail "restored snapshot has an invalid artifact inventory"
+dump_file="${dumps[0]}"
+manifest_file="${manifests[0]}"
+secrets_archive="${secret_archives[0]}"
+tar --list --file "${secrets_archive}" >/dev/null
+
+jq -e '
+  .schema_version == 1 and .encrypted == true and
+  .repository_scope == "fla_kyn_only" and
+  .excluded_organizations == ["campaign_committee"] and
+  (.source_revision | test("^[0-9a-f]{40}$")) and
+  (.migration.sha256 | test("^sha256:[0-9a-f]{64}$"))
+' "${manifest_file}" >/dev/null || fail "restored manifest is invalid"
+
+docker run --detach --name "${container}" --network none \
+  --tmpfs /var/lib/postgresql/data:rw,noexec,nosuid,size=512m \
+  --env POSTGRES_DB=kyn_restore --env POSTGRES_USER=kyn \
+  --env POSTGRES_HOST_AUTH_METHOD=trust "${postgres_image}" >/dev/null
+for _ in $(seq 1 30); do
+  if docker exec "${container}" pg_isready --username kyn --dbname kyn_restore >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+docker exec "${container}" pg_isready --username kyn --dbname kyn_restore >/dev/null ||
+  fail "isolated PostgreSQL did not become ready"
+docker exec -i "${container}" pg_restore --username kyn --dbname kyn_restore \
+  --no-owner --no-acl <"${dump_file}"
+
+restored_counts="$(
+  docker exec "${container}" psql --username kyn --dbname kyn_restore --tuples-only \
+    --no-align --field-separator '|' --command \
+    'SELECT (SELECT count(*) FROM kyn_state), (SELECT count(*) FROM kyn_commands);'
+)"
+IFS='|' read -r state_count command_count <<<"$(tr -d '[:space:]' <<<"${restored_counts}")"
+expected_state="$(jq -r '.record_counts.kyn_state' "${manifest_file}")"
+expected_commands="$(jq -r '.record_counts.kyn_commands' "${manifest_file}")"
+[[ "${state_count}" == "${expected_state}" && "${command_count}" == "${expected_commands}" ]] ||
+  fail "restored KYN counts differ from the backup manifest"
+restored_migration="$(
+  docker exec "${container}" psql --username kyn --dbname kyn_restore --tuples-only \
+    --no-align --field-separator '|' --command \
+    'SELECT version, sha256 FROM kyn_schema_migrations ORDER BY applied_at DESC LIMIT 1;'
+)"
+IFS='|' read -r migration_version migration_sha <<<"$(tr -d '[:space:]' <<<"${restored_migration}")"
+[[ "${migration_version}" == "$(jq -r '.migration.version' "${manifest_file}")" ]] ||
+  fail "restored migration version differs"
+[[ "${migration_sha}" == "$(jq -r '.migration.sha256' "${manifest_file}")" ]] ||
+  fail "restored migration digest differs"
+
+completed_at="$(date --utc +%Y-%m-%dT%H:%M:%SZ)"
+jq -n \
+  --arg completed_at "${completed_at}" \
+  --arg snapshot_id "${snapshot_id}" \
+  --arg source_revision "$(jq -r '.source_revision' "${manifest_file}")" \
+  --arg migration_version "${migration_version}" \
+  --arg migration_sha "${migration_sha}" \
+  --argjson state_count "${state_count}" \
+  --argjson command_count "${command_count}" \
+  '{schema_version: 1, status: "passed", completed_at: $completed_at,
+    isolated: true, source_database_untouched: true, snapshot_id: $snapshot_id,
+    source_revision: $source_revision,
+    migration: {version: $migration_version, sha256: $migration_sha},
+    record_counts: {kyn_state: $state_count, kyn_commands: $command_count},
+    verification: {restic_snapshot_lookup: "passed", database_restore: "passed",
+      migration_match: "passed", record_count_match: "passed",
+      service_secret_archive_catalog: "passed"}}' >"${evidence_file}"
+chmod 0600 "${evidence_file}"
+mv -- "${evidence_file}" "${evidence_target}"
+trap cleanup EXIT
+printf 'KYN isolated restore passed at %s.\n' "${completed_at}"

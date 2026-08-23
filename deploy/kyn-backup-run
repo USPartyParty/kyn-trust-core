@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+fail() {
+  printf 'KYN backup failed: %s\n' "$1" >&2
+  exit 1
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || fail "missing command: $1"
+}
+
+[[ "${EUID}" -eq 0 ]] || fail "run as root"
+umask 077
+for command in date docker flock install jq mktemp mv restic rm stat tar; do
+  require_command "${command}"
+done
+
+readonly state_root="${KYN_BACKUP_STATE_ROOT:-/srv/aiwi-services/kyn}"
+readonly database_container="${KYN_DATABASE_CONTAINER:-kyn-public-beta-kyn-database-1}"
+readonly api_container="${KYN_API_CONTAINER:-kyn-public-beta-kyn-api-1}"
+readonly staging_root="${state_root}/backup-staging"
+readonly evidence_target="${state_root}/operations/latest-backup.json"
+readonly lock_file="${KYN_BACKUP_LOCK_FILE:-/run/lock/kyn-backup.lock}"
+readonly secrets_root="${state_root}/secrets"
+
+: "${RESTIC_REPOSITORY:?RESTIC_REPOSITORY is required}"
+: "${RESTIC_PASSWORD_FILE:?RESTIC_PASSWORD_FILE is required}"
+: "${RESTIC_SFTP_ARGS:?RESTIC_SFTP_ARGS is required}"
+: "${KYN_BACKUP_SOURCE_REVISION:?KYN_BACKUP_SOURCE_REVISION is required}"
+[[ "${KYN_BACKUP_SOURCE_REVISION}" =~ ^[0-9a-f]{40}$ ]] ||
+  fail "source revision must be a full Git commit"
+[[ -f "${RESTIC_PASSWORD_FILE}" ]] || fail "Restic password file is absent"
+[[ "$(stat -c '%U:%G:%a' "${RESTIC_PASSWORD_FILE}")" == "root:root:600" ]] ||
+  fail "Restic password file must be root:root mode 0600"
+[[ -d "${secrets_root}" ]] || fail "KYN secret root is absent"
+
+for container in "${database_container}" "${api_container}"; do
+  [[ "$(docker inspect --format '{{.State.Running}}' "${container}" 2>/dev/null)" == "true" ]] ||
+    fail "required KYN container is not running: ${container}"
+done
+source_revision="$(docker inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "${api_container}")"
+[[ "${source_revision}" == "${KYN_BACKUP_SOURCE_REVISION}" ]] ||
+  fail "running KYN image does not match the authorized source revision"
+
+install -d -o root -g root -m 0700 "${staging_root}" "$(dirname "${evidence_target}")"
+exec 9>"${lock_file}"
+flock -n 9 || fail "another KYN backup holds the lock"
+
+batch="kyn-$(date --utc +%Y%m%dT%H%M%SZ)"
+batch_dir="$(mktemp -d "${staging_root}/.${batch}.XXXXXX")"
+result_file="$(mktemp "${staging_root}/.restic-result.XXXXXX")"
+evidence_file="$(mktemp "$(dirname "${evidence_target}")/.latest-backup.XXXXXX")"
+cleanup() {
+  rm -rf -- "${batch_dir}"
+  rm -f -- "${result_file}" "${evidence_file}"
+}
+trap cleanup EXIT
+
+dump_file="${batch_dir}/kyn.dump"
+secrets_archive="${batch_dir}/kyn-service-secrets.tar"
+manifest_file="${batch_dir}/manifest.json"
+
+docker exec "${database_container}" \
+  pg_dump --username kyn --dbname kyn --format=custom --no-owner --no-acl >"${dump_file}"
+docker exec -i "${database_container}" pg_restore --list <"${dump_file}" >/dev/null
+
+tar --create --file "${secrets_archive}" --numeric-owner --xattrs --acls \
+  -C "${secrets_root}" .
+tar --list --file "${secrets_archive}" >/dev/null
+
+state_counts="$(
+  docker exec "${database_container}" psql --username kyn --dbname kyn --tuples-only \
+    --no-align --field-separator '|' --command \
+    'SELECT (SELECT count(*) FROM kyn_state), (SELECT count(*) FROM kyn_commands);'
+)"
+IFS='|' read -r state_count command_count <<<"$(tr -d '[:space:]' <<<"${state_counts}")"
+[[ "${state_count}" =~ ^[0-9]+$ && "${command_count}" =~ ^[0-9]+$ ]] ||
+  fail "KYN record counts are unavailable"
+migration="$(
+  docker exec "${database_container}" psql --username kyn --dbname kyn --tuples-only \
+    --no-align --field-separator '|' --command \
+    'SELECT version, sha256 FROM kyn_schema_migrations ORDER BY applied_at DESC LIMIT 1;'
+)"
+IFS='|' read -r migration_version migration_sha <<<"$(tr -d '[:space:]' <<<"${migration}")"
+[[ -n "${migration_version}" && "${migration_sha}" =~ ^sha256:[0-9a-f]{64}$ ]] ||
+  fail "KYN migration evidence is unavailable"
+
+jq -n \
+  --arg batch "${batch}" \
+  --arg source_revision "${source_revision}" \
+  --arg migration_version "${migration_version}" \
+  --arg migration_sha "${migration_sha}" \
+  --argjson state_count "${state_count}" \
+  --argjson command_count "${command_count}" \
+  '{schema_version: 1, backup_batch: $batch, source_revision: $source_revision,
+    components: ["kyn_database", "kyn_service_secrets"], encrypted: true,
+    repository_scope: "fla_kyn_only", excluded_organizations: ["campaign_committee"],
+    migration: {version: $migration_version, sha256: $migration_sha},
+    record_counts: {kyn_state: $state_count, kyn_commands: $command_count}}' >"${manifest_file}"
+
+export RESTIC_REPOSITORY RESTIC_PASSWORD_FILE
+readonly -a restic_options=(--option "sftp.args=${RESTIC_SFTP_ARGS}")
+restic "${restic_options[@]}" backup "${batch_dir}" --host kyn-optiplex \
+  --tag kyn --tag fla --tag gate-b --tag "${batch}" --json >"${result_file}"
+snapshot_id="$(jq -sr '[.[] | select(.message_type == "summary")][-1].snapshot_id // empty' "${result_file}")"
+[[ "${snapshot_id}" =~ ^[0-9a-f]{64}$ ]] || fail "Restic returned no snapshot"
+restic "${restic_options[@]}" snapshots --json --tag "${batch}" | jq -e \
+  --arg snapshot_id "${snapshot_id}" \
+  'any(.[]; .id == $snapshot_id and (.tags | index("kyn")) != null and (.tags | index("fla")) != null)' >/dev/null ||
+  fail "snapshot lookup did not confirm the KYN backup"
+
+completed_at="$(date --utc +%Y-%m-%dT%H:%M:%SZ)"
+jq -n \
+  --arg completed_at "${completed_at}" \
+  --arg batch "${batch}" \
+  --arg source_revision "${source_revision}" \
+  --arg snapshot_id "${snapshot_id}" \
+  --arg migration_version "${migration_version}" \
+  --arg migration_sha "${migration_sha}" \
+  --argjson state_count "${state_count}" \
+  --argjson command_count "${command_count}" \
+  '{schema_version: 1, status: "passed", completed_at: $completed_at,
+    encrypted: true, off_device: true, repository_role: "pi_kyn_only",
+    credential_separation: "KYN credentials are independent from Campaign Committee backup credentials",
+    backup_batch: $batch, source_revision: $source_revision, snapshot_id: $snapshot_id,
+    migration: {version: $migration_version, sha256: $migration_sha},
+    record_counts: {kyn_state: $state_count, kyn_commands: $command_count},
+    verification: {database_dump_catalog: "passed", service_secret_archive_catalog: "passed", snapshot_lookup: "passed"}}' >"${evidence_file}"
+chmod 0600 "${evidence_file}"
+mv -- "${evidence_file}" "${evidence_target}"
+trap cleanup EXIT
+printf 'KYN encrypted off-device backup passed at %s.\n' "${completed_at}"

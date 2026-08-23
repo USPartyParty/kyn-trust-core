@@ -1,0 +1,29 @@
+[Unit]
+Description=Create an encrypted off-device KYN recovery point
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+ConditionPathIsMountPoint=/srv/aiwi-services
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+EnvironmentFile=/etc/kyn-backup/backup.conf
+ExecStart=/usr/local/libexec/kyn/kyn-backup-run
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ReadWritePaths=/srv/aiwi-services/kyn /run/lock
+ReadOnlyPaths=/etc/kyn-backup /var/run/docker.sock
+CapabilityBoundingSet=CAP_DAC_READ_SEARCH
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native

@@ -40,11 +40,14 @@ poll has been opened.
 - `docs/DEPLOYMENT_AND_KC_ACTIVATION.md`: dark-deploy, secret-custody, backup, and
   explicit KC activation runbook
 - `docs/POLICY_PARAMETERS.md`: unresolved pilot values and acceptance state
+- `docs/OPERATOR_RELYING_PARTY_AGREEMENT.md`: exact Gate B organizational and data boundary
+- `docs/KC_GATE_B_DESIGNATION.md`: exact one-subject bootstrap meaning and limits
 - `docs/adr/`: accepted architecture decisions
 - `schemas/`: public interoperability contracts
 - `api/openapi.v1.json`: versioned Trust Core HTTP contract
 - `migrations/`: durable PostgreSQL schema
 - `src/kyn/`: state machine, participant proofs, persistence, and HTTP service
+- `deploy/`: dark topology, activation client, separate encrypted backup, isolated restore, and host installers
 - `tests/fixtures/`: synthetic examples only
 - `tests/`: automated workflow, persistence, privacy, and authority tests
 - `CONTRIBUTING.md`: public change process

@@ -90,6 +90,30 @@ Optiplex or share campaign backup credentials. Activation requires a real isolat
 restore and a SHA-256 evidence record; a backup job that has never restored does not
 pass.
 
+The reviewed source provides:
+
+- `deploy/provision-pi-backup-repository.sh`: root-only creation of the separate
+  `kyn-backup` SFTP chroot and key boundary on the Pi;
+- `deploy/install-kyn-backup.sh`: root-only Optiplex credential and systemd
+  installation;
+- `deploy/kyn-backup-run`: revision-bound database/secret backup with KYN/FLA tags
+  and content-free evidence; and
+- `deploy/kyn-restore-test` and `deploy/kyn-restore-run`: Restic lookup plus
+  isolated no-network PostgreSQL restore, migration/count comparison, and
+  secret-archive catalog verification.
+
+Prepare the SSH key, Restic password, pinned host key, and `backup.conf` outside the
+repository. Provision the Pi with only the public key. On the Optiplex, install the
+private inputs under `/etc/kyn-backup`, start one manual `kyn-backup.service`, record
+its snapshot ID, and run:
+
+```sh
+sudo /usr/local/sbin/kyn-restore-run FULL_SNAPSHOT_ID
+```
+
+Do not enable Gate B merely because a snapshot exists; the isolated restore evidence
+must report `passed`.
+
 ## Exact accepted Gate B release package
 
 Release `1.0.0` is staged at these immutable URLs:

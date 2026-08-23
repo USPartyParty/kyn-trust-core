@@ -1,0 +1,9 @@
+# Root-owned mode 0600 at /etc/kyn-backup/backup.conf
+RESTIC_REPOSITORY=sftp:kyn-backup@aiwi-pi:/repository
+RESTIC_PASSWORD_FILE=/etc/kyn-backup/restic-password
+RESTIC_SFTP_ARGS="-i /etc/kyn-backup/id_ed25519 -o BatchMode=yes -o IdentitiesOnly=yes -o UserKnownHostsFile=/etc/kyn-backup/known_hosts"
+RESTIC_CACHE_DIR=/srv/aiwi-services/kyn/restic-cache
+KYN_BACKUP_SOURCE_REVISION=REPLACE_WITH_FULL_KYN_SOURCE_COMMIT
+KYN_BACKUP_STATE_ROOT=/srv/aiwi-services/kyn
+KYN_DATABASE_CONTAINER=kyn-public-beta-kyn-database-1
+KYN_API_CONTAINER=kyn-public-beta-kyn-api-1

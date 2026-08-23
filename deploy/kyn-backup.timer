@@ -1,0 +1,11 @@
+[Unit]
+Description=Run encrypted KYN backup every fifteen minutes
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+RandomizedDelaySec=30
+Unit=kyn-backup.service
+
+[Install]
+WantedBy=timers.target
