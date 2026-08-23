@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "lifecycle_state": "deployed",
+  "scope": "one KC-controlled bootstrap_vouched subject only",
+  "activated_at": "2026-08-23T22:37:36.089046Z",
+  "runtime_source_revision": "8058ce7ac0d36f3a8dda140d735cbb28276a410d",
+  "runtime_image": "sha256:4fcba960fcf43c13d6a7813c8d96b4df607a57808139a4abf9b9d798528b07ed",
+  "activation_body_digest": "sha256:7b61441037ab0d2ade610c5907387a93ebd3f90a17c28b9e1bc39af6cb36f670",
+  "designation_reference": "sha256:3f9c66fcef24e5b8b810dedd3838d4ac5668bbaf729199e71cdd758db5127e99",
+  "backup_evidence_reference": "sha256:b02f1639449480e28b3ea4e06011e3c742b176a0a3deaf137d83fc53094836cc",
+  "release_version": "1.0.0",
+  "notice_version": "1.0.0",
+  "storage_posture": "provisional_beta",
+  "sensitive_evidence_enabled": false,
+  "record_counts": {
+    "subject": 1,
+    "bootstrap_authority": 1,
+    "authority_grant": 1,
+    "operator_release": 1,
+    "consent_record": 1,
+    "recovery_commitment": 1,
+    "kyn_state": 1,
+    "kyn_commands": 3
+  },
+  "verification": {
+    "preactivation_rotation": "passed",
+    "signed_activation": "passed",
+    "bootstrap_endpoint_retired": "passed",
+    "exact_version_consent": "passed",
+    "recovery_commitment": "passed",
+    "post_activation_backup": "passed",
+    "post_activation_isolated_restore": "passed",
+    "recovery_request": "pending human exercise",
+    "privacy_request": "pending human exercise",
+    "ordinary_enrollment_open": false,
+    "claims_registered": 0,
+    "polls_open": 0
+  },
+  "post_activation_restore": {
+    "snapshot_id": "eec4ab1a44b21afdfc0d09ddd8880c8d5e6bbb579f53b93613182bb3c7a71a2e",
+    "evidence_sha256": "sha256:8175a53f93582a089464e6173bc8ff5f10130ffda8d6a0f69aa1c8f26907c810"
+  }
+}

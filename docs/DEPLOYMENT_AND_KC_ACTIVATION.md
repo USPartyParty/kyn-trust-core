@@ -1,6 +1,6 @@
 # KYN deployment readiness and KC activation
 
-Status: dark deployment reconciled 2026-08-23; Gate B package accepted but not activated
+Status: KC-first Gate B deployed 2026-08-23; ordinary enrollment remains closed
 
 This runbook converts KYN-000C source into the first empty, real public beta. It does
 not authorize sensitive evidence, fictional live participants, binding or
@@ -119,17 +119,19 @@ sudo /usr/local/sbin/kyn-restore-latest
 The Pi hosts separate SFTP-only user `kyn-backup` in chroot `/srv/kyn-backup`. Its
 key, repository, password, and KYN/FLA tags are independent from the Campaign
 Committee repository. The Optiplex timer runs every fifteen minutes. Exact runtime
-source `480d25b653e8b7809bcd9ef6d76a6b99765dc119` produced encrypted snapshot
-`58ca176c10350d28f24d460893acf54da37082f7a3388771701eba60a8cccbb7`.
+source `8058ce7ac0d36f3a8dda140d735cbb28276a410d` runs healthy with operator release
+inactive. The accepted pre-activation rotation replaced all dark service credentials
+while retaining a root-only rollback copy and preserving zero state/commands.
 
-An isolated, no-network PostgreSQL restore passed database restore, migration digest,
-record-count comparison, and service-secret archive catalog checks without touching
-the source database. Public-safe evidence is
-`docs/evidence/kyn-gate-b-restore-20260823.json`, SHA-256
-`2cd4f405e89607de3dede4970c03b9f4ee53c1be89f2557f4e448826c8ed8195`.
-The activation draft binds that exact evidence hash.
-Do not enable Gate B merely because a snapshot exists; the isolated restore evidence
-must report `passed`.
+Rotated encrypted snapshot
+`9a4eeff6145390d59c3a933b94e0ed1658f599fa047c500ee8e65c8a73db18d1`
+passed isolated, no-network PostgreSQL restore, migration digest, record-count, and
+service-secret archive checks without touching the source database. Public-safe
+evidence is `docs/evidence/kyn-gate-b-rotated-restore-20260823.json`, SHA-256
+`b02f1639449480e28b3ea4e06011e3c742b176a0a3deaf137d83fc53094836cc`.
+The activation draft binds that exact post-rotation evidence hash. Do not enable
+Gate B merely because a snapshot exists; the isolated restore evidence must report
+`passed`.
 
 ## Exact accepted Gate B release package
 
@@ -180,19 +182,29 @@ non-effective until the signed KC activation succeeds.
     only separately accepted claim definitions, and run real empty-to-KC browser
     journeys. Do not seed fictional live data.
 
-## Reconciled deployment facts
+## KC-first deployment evidence — 2026-08-23
 
-On 2026-08-23 the dark API and database are healthy. The API is loopback-only,
-PostgreSQL is unpublished, `/docs` and `/openapi.json` return `404`, and the
-operator-release endpoint returns `503`. The database has zero state and command
-rows. Applied migration `0001_kyn_000b_state.sql` matches reviewed SHA-256
+Exact runtime source `8058ce7ac0d36f3a8dda140d735cbb28276a410d` runs as image
+`sha256:4fcba960fcf43c13d6a7813c8d96b4df607a57808139a4abf9b9d798528b07ed`.
+The API remains loopback-only, PostgreSQL unpublished, and documentation absent.
+Migration `0001_kyn_000b_state.sql` retains SHA-256
 `9e02acee4fbd16946973e8e17b274deab749b3b71c8d4fda188164e91e592ba2`.
-Release pages are public and enrollment is closed.
 
-Apache License 2.0, the operational release package, the one-subject provisional
-exception, and separate encrypted Pi recovery direction are accepted. Remaining
-activation work is the revision-labeled image rebuild, KYN-only backup repository,
-isolated restore, exact operator/relying-party and KC designation records, activation
-draft hashes, service-secret rotation, KC key creation, signed request, receipt,
-replay rejection, and redacted evidence. No missing observation is recorded as
-passed.
+Pre-activation credentials rotated from an empty fail-closed state. The signed exact
+request activated release `1.0.0`, one KC subject, one `bootstrap_vouched` authority,
+and its scoped grant. The bootstrap endpoint was then retired and returns `404` even
+with the former token. Exact-version consent and one recovery commitment are active;
+the recovery secret is held in the desktop secret service rather than source or KYN
+evidence.
+
+Post-activation encrypted snapshot
+`eec4ab1a44b21afdfc0d09ddd8880c8d5e6bbb579f53b93613182bb3c7a71a2e`
+passed isolated restore. Evidence SHA-256 is
+`8175a53f93582a089464e6173bc8ff5f10130ffda8d6a0f69aa1c8f26907c810`.
+Public-safe activation, rotation, restore, and consent/recovery evidence is under
+`docs/evidence/`.
+
+The lifecycle state is `deployed`, not `production-accepted`. Recovery-request and
+privacy-request human exercises remain. No claim definition, credential, additional
+subject, ordinary enrollment, public KYN ingress, poll, ballot, or sensitive evidence
+is active. HTTPS participant ingress and portal enrollment remain Gate C work.

@@ -55,10 +55,12 @@ poll has been opened.
 
 ## Status and licensing
 
-KYN-000C and its deployment/activation tooling are implemented in source. A dark,
-empty Optiplex deployment runs a loopback-only healthy API and unpublished
-PostgreSQL database; no operator release, subject, command, claim, credential, or
-poll is active.
+KYN Gate B is deployed for exactly one KC-controlled `bootstrap_vouched` subject.
+Runtime source `8058ce7ac0d36f3a8dda140d735cbb28276a410d` runs a loopback-only
+healthy API and unpublished PostgreSQL database. Release `1.0.0`, exact-version
+consent, and one recovery commitment are active. The bootstrap endpoint is retired.
+Ordinary enrollment, claims, credentials, polls, and sensitive evidence remain
+closed.
 
 KYN is licensed under the Apache License 2.0. Five Letter Agency operates KYN within
 The Party Party public project. The Korey Streich Campaign Committee is the separate
@@ -67,16 +69,17 @@ notice, security process/contact, provisional-storage disclosure, and this
 operator/relying-party boundary are accepted operationally for the bounded KC-first
 Gate B package; that acceptance is not independent legal advice.
 
-Gate B permits exactly one KC-controlled `bootstrap_vouched` subject on the disclosed
-unencrypted provisional volume as an explicit exception to the earlier
-encrypted-replacement-storage gate. The exception requires a separate encrypted KYN
-backup repository, independent credentials, successful isolated restore, rotated
-pre-activation service secrets, operator recovery, exact designation and backup
-evidence hashes, and KC's locally generated encrypted participant key before
-activation. It authorizes no sensitive evidence, ordinary public enrollment,
-verified-Wisconsin claim, binding or determining poll, or durable-production claim.
-Backup failure, inability to restore, unexpected exposure, or loss of separation
-stops the beta.
+Gate B uses the disclosed unencrypted provisional volume under the accepted
+one-subject exception. Separate KYN/FLA Restic credentials and Pi repository,
+pre-activation credential rotation, encrypted backup, and isolated no-network
+restore passed before activation; post-activation backup and restore also pass.
+Public-safe evidence is under `docs/evidence/`.
+
+The bounded release is `deployed`, not `production-accepted`: recovery-request and
+privacy-request human exercises remain. It authorizes no sensitive evidence,
+ordinary public enrollment, verified-Wisconsin claim, binding or determining poll,
+or durable-production claim. Backup failure, inability to restore, unexpected
+exposure, or loss of separation stops the beta.
 
 No fake participant records may be seeded into a live environment. KC is the only
 permitted first bootstrap subject. Later participants must enter through real,

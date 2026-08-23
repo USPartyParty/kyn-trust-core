@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "completed_at": "2026-08-23T22:52:12Z",
+  "isolated": true,
+  "source_database_untouched": true,
+  "snapshot_id": "eec4ab1a44b21afdfc0d09ddd8880c8d5e6bbb579f53b93613182bb3c7a71a2e",
+  "source_revision": "8058ce7ac0d36f3a8dda140d735cbb28276a410d",
+  "migration": {
+    "version": "0001_kyn_000b_state.sql",
+    "sha256": "sha256:9e02acee4fbd16946973e8e17b274deab749b3b71c8d4fda188164e91e592ba2"
+  },
+  "record_counts": {
+    "kyn_state": 1,
+    "kyn_commands": 3
+  },
+  "verification": {
+    "restic_snapshot_lookup": "passed",
+    "database_restore": "passed",
+    "migration_match": "passed",
+    "record_count_match": "passed",
+    "service_secret_archive_catalog": "passed"
+  }
+}

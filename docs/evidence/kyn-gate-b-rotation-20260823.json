@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "completed_at": "2026-08-23T22:00:27Z",
+  "rotation_id": "preactivation-20260823T215959Z",
+  "source_revision": "8058ce7ac0d36f3a8dda140d735cbb28276a410d",
+  "precondition": {
+    "operator_release": "inactive",
+    "kyn_state": 0,
+    "kyn_commands": 0,
+    "isolated_restore": "passed"
+  },
+  "result": {
+    "all_service_credentials_rotated": true,
+    "operator_release": "inactive",
+    "kyn_state": 0,
+    "kyn_commands": 0,
+    "rollback_state_retained": true
+  }
+}
