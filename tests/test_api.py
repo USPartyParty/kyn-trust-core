@@ -55,6 +55,53 @@ def prepare_database(database_url: str) -> None:
     asyncio.run(prepare())
 
 
+def test_retired_bootstrap_endpoint_is_absent(tmp_path: Path) -> None:
+    database_url = f"sqlite+aiosqlite:///{tmp_path / 'retired.db'}"
+    prepare_database(database_url)
+    settings = Settings(
+        environment="integration",
+        database_url=database_url,
+        issuer="https://kyn.usparty.party",
+        signing_seed_file=write_secret(tmp_path / "signing.seed", b"s" * 32),
+        pairwise_secret_file=write_secret(tmp_path / "pairwise.secret", b"p" * 32),
+        receipt_secret_file=write_secret(tmp_path / "receipt.secret", b"r" * 32),
+        bootstrap_enabled=False,
+        bootstrap_token_file=None,
+    )
+    participant = Ed25519Signer.from_seed("retired-bootstrap", b"k" * 32)
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+    body = {
+        "participant_key": participant.participant_key,
+        "public_label": "KC Streich",
+        "designation_reference": "sha256:" + "a" * 64,
+        "policy_version": "1.0.0",
+        "expires_at": (now + timedelta(days=365)).isoformat().replace("+00:00", "Z"),
+        "release_version": "1.0.0",
+        "notice_version": "1.0.0",
+        "terms_url": "https://usparty.party/kyn/terms/1.0.0",
+        "privacy_url": "https://usparty.party/kyn/privacy/1.0.0",
+        "operator_contact": "kc@uspartyparty.com",
+        "storage_posture": "provisional_beta",
+        "backup_evidence_reference": "sha256:" + "b" * 64,
+        "sensitive_evidence_enabled": False,
+    }
+    payload = signed_payload(
+        participant,
+        operation="authority.bootstrap_activate",
+        nonce="retired-bootstrap-0001",
+        body=body,
+        now=now,
+    )
+
+    with TestClient(create_app(settings)) as client:
+        response = client.post(
+            "/v1/bootstrap/activate",
+            json=payload,
+            headers={"Authorization": f"Bearer {(b'b' * 32).decode()}"},
+        )
+    assert response.status_code == 404
+
+
 def test_authenticated_durable_kc_bootstrap_journey(tmp_path: Path) -> None:  # noqa: PLR0915
     database_url = f"sqlite+aiosqlite:///{tmp_path / 'kyn.db'}"
     prepare_database(database_url)

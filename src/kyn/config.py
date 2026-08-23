@@ -23,7 +23,8 @@ class Settings(BaseSettings):
     signing_seed_file: Path
     pairwise_secret_file: Path
     receipt_secret_file: Path
-    bootstrap_token_file: Path
+    bootstrap_enabled: bool = True
+    bootstrap_token_file: Path | None = None
     action_clock_skew_seconds: int = Field(default=120, ge=15, le=300)
     bind_host: str = "127.0.0.1"
     bind_port: int = Field(default=8090, ge=1024, le=65535)
@@ -40,6 +41,8 @@ class Settings(BaseSettings):
                 raise ValueError("production database URL must come from a secret file")
             if self.bind_host not in {"127.0.0.1", "0.0.0.0"}:  # noqa: S104
                 raise ValueError("production bind host must be explicit")
+        if self.bootstrap_enabled and self.bootstrap_token_file is None:
+            raise ValueError("enabled bootstrap requires a token file")
         return self
 
     def resolved_database_url(self) -> str:

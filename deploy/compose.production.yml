@@ -24,6 +24,7 @@ x-kyn-environment: &kyn-environment
   KYN_SIGNING_SEED_FILE: /run/secrets/kyn/signing.seed
   KYN_PAIRWISE_SECRET_FILE: /run/secrets/kyn/pairwise.secret
   KYN_RECEIPT_SECRET_FILE: /run/secrets/kyn/receipt.secret
+  KYN_BOOTSTRAP_ENABLED: ${KYN_BOOTSTRAP_ENABLED:-true}
   KYN_BOOTSTRAP_TOKEN_FILE: /run/secrets/kyn/bootstrap.token
   KYN_BIND_HOST: 0.0.0.0
   KYN_BIND_PORT: "8090"

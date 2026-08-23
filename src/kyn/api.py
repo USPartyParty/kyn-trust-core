@@ -330,11 +330,14 @@ async def activate_bootstrap(
     request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bootstrap_bearer)],
 ) -> dict[str, Any]:
+    expected_token = getattr(request.app.state, "bootstrap_token", None)
+    if expected_token is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     verify_bootstrap_token(
         supplied=credentials.credentials,
-        expected=request.app.state.bootstrap_token,
+        expected=expected_token,
     )
     operation = "authority.bootstrap_activate"
     action = await _authorize(

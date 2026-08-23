@@ -48,7 +48,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         signing_seed = read_secret_file(resolved.signing_seed_file, expected_bytes=32)
         pairwise_secret = read_secret_file(resolved.pairwise_secret_file)
         receipt_secret = read_secret_file(resolved.receipt_secret_file)
-        bootstrap_token = read_secret_file(resolved.bootstrap_token_file)
+        bootstrap_token = (
+            read_secret_file(resolved.bootstrap_token_file)
+            if resolved.bootstrap_enabled and resolved.bootstrap_token_file is not None
+            else None
+        )
         engine = create_database_engine(resolved.resolved_database_url())
         app.state.database_engine = engine
         app.state.trust_service = DurableTrustService(

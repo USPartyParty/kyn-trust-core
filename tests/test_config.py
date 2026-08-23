@@ -41,6 +41,23 @@ def test_production_rejects_non_https_issuer_and_non_postgres_state(tmp_path: Pa
         settings.resolved_database_url()
 
 
+def test_retired_bootstrap_no_longer_requires_token_file(tmp_path: Path) -> None:
+    disabled = Settings(  # type: ignore[arg-type]
+        **production_settings(
+            tmp_path,
+            bootstrap_enabled=False,
+            bootstrap_token_file=None,
+        )
+    )
+    assert disabled.bootstrap_enabled is False
+    assert disabled.bootstrap_token_file is None
+
+    with pytest.raises(ValidationError, match="enabled bootstrap requires a token file"):
+        Settings(  # type: ignore[arg-type]
+            **production_settings(tmp_path, bootstrap_token_file=None)
+        )
+
+
 def test_secret_reader_rejects_broad_permissions_and_wrong_seed_size(tmp_path: Path) -> None:
     secret = tmp_path / "secret"
     secret.write_bytes(b"s" * 32)
