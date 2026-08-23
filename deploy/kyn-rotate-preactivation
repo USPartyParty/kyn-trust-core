@@ -13,6 +13,9 @@ set -a
 # shellcheck disable=SC1090 -- fixed root-owned configuration path
 source "${config}"
 set +a
+export DOCKER_CONFIG="${KYN_DOCKER_CONFIG:-/home/kcs/.docker}"
+[[ -x "${DOCKER_CONFIG}/cli-plugins/docker-compose" ]] ||
+  fail "reviewed Docker Compose plugin is unavailable"
 
 : "${KYN_BACKUP_STATE_ROOT:?KYN_BACKUP_STATE_ROOT is required}"
 : "${KYN_DEPLOY_DIR:?KYN_DEPLOY_DIR is required}"
