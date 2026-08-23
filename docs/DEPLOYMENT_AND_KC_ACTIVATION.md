@@ -113,6 +113,21 @@ sudo systemctl start kyn-backup.service
 sudo /usr/local/sbin/kyn-restore-latest
 ```
 
+
+### Gate B recovery evidence — 2026-08-23
+
+The Pi hosts separate SFTP-only user `kyn-backup` in chroot `/srv/kyn-backup`. Its
+key, repository, password, and KYN/FLA tags are independent from the Campaign
+Committee repository. The Optiplex timer runs every fifteen minutes. Exact runtime
+source `480d25b653e8b7809bcd9ef6d76a6b99765dc119` produced encrypted snapshot
+`58ca176c10350d28f24d460893acf54da37082f7a3388771701eba60a8cccbb7`.
+
+An isolated, no-network PostgreSQL restore passed database restore, migration digest,
+record-count comparison, and service-secret archive catalog checks without touching
+the source database. Public-safe evidence is
+`docs/evidence/kyn-gate-b-restore-20260823.json`, SHA-256
+`2cd4f405e89607de3dede4970c03b9f4ee53c1be89f2557f4e448826c8ed8195`.
+The activation draft binds that exact evidence hash.
 Do not enable Gate B merely because a snapshot exists; the isolated restore evidence
 must report `passed`.
 

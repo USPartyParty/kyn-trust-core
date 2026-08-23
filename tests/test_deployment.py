@@ -51,6 +51,8 @@ def test_kyn_backup_is_encrypted_separate_and_restore_tested() -> None:
     assert "kyn-service-secrets.tar" in backup
     assert "org.opencontainers.image.revision" in backup
     assert "--network none" in restore
+    assert "69573b32242ca232f65871d4cb916ba7210a372b9bd74068204c1a9a57bada4f" in restore
+    assert 'fail "run as root"' not in restore
     assert "source_database_untouched: true" in restore
     assert 'database_restore: "passed"' in restore
     assert "Match User kyn-backup" in pi

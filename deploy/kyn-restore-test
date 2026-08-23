@@ -10,7 +10,6 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "missing command: $1"
 }
 
-[[ "${EUID}" -eq 0 ]] || fail "run as root"
 [[ "$#" -eq 1 ]] || fail "usage: $0 RESTIC_SNAPSHOT_ID"
 readonly snapshot_id="$1"
 [[ "${snapshot_id}" =~ ^[0-9a-f]{64}$ ]] || fail "snapshot ID must be a full Restic ID"
@@ -23,7 +22,7 @@ done
 : "${RESTIC_PASSWORD_FILE:?RESTIC_PASSWORD_FILE is required}"
 : "${RESTIC_SFTP_ARGS:?RESTIC_SFTP_ARGS is required}"
 readonly evidence_target="${KYN_RESTORE_EVIDENCE_TARGET:-/srv/aiwi-services/kyn/operations/latest-restore.json}"
-readonly postgres_image="${KYN_RESTORE_POSTGRES_IMAGE:-pgvector/pgvector@sha256:18d16372b8406bb38a9f94cbff15d125c463d71fde2770aa8b5c64bfcc1578ee}"
+readonly postgres_image="${KYN_RESTORE_POSTGRES_IMAGE:-docker.io/pgvector/pgvector:0.8.5-pg17-trixie@sha256:69573b32242ca232f65871d4cb916ba7210a372b9bd74068204c1a9a57bada4f}"
 readonly restore_root="$(mktemp -d /tmp/kyn-restore.XXXXXX)"
 readonly container="kyn-restore-${RANDOM}-${RANDOM}"
 readonly evidence_file="$(mktemp "$(dirname "${evidence_target}")/.latest-restore.XXXXXX")"
