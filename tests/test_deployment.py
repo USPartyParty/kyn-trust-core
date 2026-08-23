@@ -6,6 +6,7 @@ COMPOSE = ROOT / "deploy" / "compose.production.yml"
 BACKUP_RUNNER = ROOT / "deploy" / "kyn-backup-run"
 RESTORE_RUNNER = ROOT / "deploy" / "kyn-restore-test"
 RESTORE_WRAPPER = ROOT / "deploy" / "kyn-restore-run"
+RESTORE_LATEST = ROOT / "deploy" / "kyn-restore-latest"
 PI_PROVISIONER = ROOT / "deploy" / "provision-pi-backup-repository.sh"
 BACKUP_INSTALLER = ROOT / "deploy" / "install-kyn-backup.sh"
 
@@ -29,6 +30,7 @@ def test_backup_shell_contracts_are_syntax_valid() -> None:
         BACKUP_RUNNER,
         RESTORE_RUNNER,
         RESTORE_WRAPPER,
+        RESTORE_LATEST,
         PI_PROVISIONER,
         BACKUP_INSTALLER,
     ):
@@ -57,3 +59,5 @@ def test_kyn_backup_is_encrypted_separate_and_restore_tested() -> None:
     installer = BACKUP_INSTALLER.read_text(encoding="utf-8")
     assert "kyn-restore-run" in installer
     assert "/etc/kyn-backup" in installer
+    assert "NOPASSWD" in installer
+    assert "kyn-restore-latest" in installer

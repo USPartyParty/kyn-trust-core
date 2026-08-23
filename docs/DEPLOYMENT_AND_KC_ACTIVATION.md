@@ -103,12 +103,14 @@ The reviewed source provides:
   secret-archive catalog verification.
 
 Prepare the SSH key, Restic password, pinned host key, and `backup.conf` outside the
-repository. Provision the Pi with only the public key. On the Optiplex, install the
-private inputs under `/etc/kyn-backup`, start one manual `kyn-backup.service`, record
-its snapshot ID, and run:
+repository. Provision the Pi with only the public key. One authenticated Optiplex
+installer run places the private inputs under `/etc/kyn-backup` and installs a
+narrow sudoers rule permitting only manual backup start and restore of the latest
+KYN snapshot. Routine evidence no longer requires repeated password entry:
 
 ```sh
-sudo /usr/local/sbin/kyn-restore-run FULL_SNAPSHOT_ID
+sudo systemctl start kyn-backup.service
+sudo /usr/local/sbin/kyn-restore-latest
 ```
 
 Do not enable Gate B merely because a snapshot exists; the isolated restore evidence

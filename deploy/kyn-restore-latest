@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+[[ "${EUID}" -eq 0 ]] || {
+  printf 'KYN latest restore wrapper must run as root.\n' >&2
+  exit 1
+}
+readonly config="${KYN_BACKUP_CONFIG:-/etc/kyn-backup/backup.conf}"
+[[ -f "${config}" ]] || {
+  printf 'KYN backup configuration is absent.\n' >&2
+  exit 1
+}
+set -a
+# shellcheck disable=SC1090 -- fixed root-owned configuration path
+source "${config}"
+set +a
+readonly snapshot_id="$(
+  restic --option "sftp.args=${RESTIC_SFTP_ARGS}" snapshots --json --tag gate-b |
+    jq -r 'sort_by(.time) | last | .id // empty'
+)"
+[[ "${snapshot_id}" =~ ^[0-9a-f]{64}$ ]] || {
+  printf 'No complete KYN Gate B snapshot is available.\n' >&2
+  exit 1
+}
+exec /usr/local/sbin/kyn-restore-run "${snapshot_id}"
