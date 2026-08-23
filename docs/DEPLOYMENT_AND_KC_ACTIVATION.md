@@ -1,6 +1,6 @@
 # KYN deployment readiness and KC activation
 
-Status: source-ready candidate as of 2026-07-31; not deployed or activated
+Status: dark deployment reconciled 2026-08-23; Gate B package accepted but not activated
 
 This runbook converts KYN-000C source into the first empty, real public beta. It does
 not authorize sensitive evidence, fictional live participants, binding or
@@ -28,18 +28,20 @@ The deployment bundle provides:
 - a trusted two-stage KC activation client with exact payload review, signed request,
   typed confirmations, response validation, and content-free evidence.
 
-The Optiplex is the designated state host and active deployment target for KYN and
-the broader specified state stack. KYN deploys dark and empty on the dedicated
-campaign service volume with backup, restore, and disk-monitoring evidence. Replacement
-storage and monitored power are the first public financial and polling goal.
-Deployment and fundraising advance concurrently, followed by a controlled live-state
-migration.
+The Optiplex is the designated state host. The actual dark deployment uses the
+dedicated `/srv/aiwi-services/kyn` state and secret roots. The API is healthy on
+`127.0.0.1:8090`, PostgreSQL has no host port, the database is empty, documentation
+routes are absent, and the operator-release endpoint fails closed.
 
-The current integration volume is unencrypted and therefore admits only rotatable
-pre-activation service credentials. KC activation, participant enrollment,
-credential issuance, and irreplaceable evidence remain disabled until migration to
-encrypted replacement storage, rotation of those credentials, proved operator
-recovery, and clean restore.
+The state volume is unencrypted. For Gate B only, KC accepted a one-subject
+provisional exception: exactly one KC-controlled `bootstrap_vouched` subject may be
+activated after a separate encrypted KYN backup repository on the Pi and a clean
+isolated restore pass. Sensitive evidence, ordinary enrollment, additional subjects,
+verified-Wisconsin claims, binding/determining polls, and durable-production claims
+remain prohibited. Backup failure, inability to restore, unexpected exposure, or
+loss of operator/relying-party separation stops the beta. Replacement storage and
+monitored power remain the funded migration path rather than a prerequisite for this
+single-subject exception.
 
 The first live container start proved internal health but exposed no host listener:
 marking the API bridge `internal` prevented Docker from realizing the configured
@@ -79,15 +81,16 @@ uv run kyn-activate key-init \
   --output /a/kc-controlled/non-repository/path/kc-kyn.key.json
 ```
 
-### Backup recovery secret — must be kept off the state host
+### Backup recovery secret — separate KYN custody
 
-The first encrypted backup method and recovery custodian must be selected after the
-online host inventory confirms the available encrypted destination. Its decryption
-material must not live only on the provisional Optiplex. Activation requires a real
+Gate B uses a KYN-only encrypted Restic repository on the Pi with credentials
+independent from the Campaign Committee repository. KC/FLA is the initial recovery
+custodian. The repository password and transport key must not live only on the
+Optiplex or share campaign backup credentials. Activation requires a real isolated
 restore and a SHA-256 evidence record; a backup job that has never restored does not
 pass.
 
-## Exact public release candidate
+## Exact accepted Gate B release package
 
 Release `1.0.0` is staged at these immutable URLs:
 
@@ -103,8 +106,10 @@ Streich Campaign Committee / AI for Wisconsin as a legally separate relying part
 posture, and sensitive evidence as disabled. The portal independently verifies every
 content SHA-256 during its production build.
 
-These pages remain visibly non-effective until the exact KC activation. Publication
-for review is not acceptance.
+KC accepted these exact pages operationally for the bounded Gate B package, together
+with Apache License 2.0 and the FLA-operator/separate-Campaign-Committee relying-party
+boundary. This is not independent legal advice. The pages remain visibly
+non-effective until the signed KC activation succeeds.
 
 ## Deployment and evidence order
 
@@ -134,19 +139,19 @@ for review is not acceptance.
     only separately accepted claim definitions, and run real empty-to-KC browser
     journeys. Do not seed fictional live data.
 
-## Immediate deployment facts
+## Reconciled deployment facts
 
-On 2026-08-01 the Optiplex was reachable through Tailscale and SSH. The read-only
-inventory verified active firewall, synchronized time, Docker 29.1.3, approximately
-228 GB free in the volume group, no campaign logical volume, and no running
-containers. The exact reviewed KYN source is staged on the host with a matching
-deployment-file SHA-256. Compose v2.40.3 is installed for the deployment user, the
-production model validates, and the exact KYN image builds successfully. No KYN
-container, secret, database, or campaign volume exists yet. Interactive
-campaign-volume creation, secret provisioning, service start, backup/restore, TLS,
-KC key creation, and activation are the immediate deployment work. Do not convert
-unperformed observations into passing evidence.
+On 2026-08-23 the dark API and database are healthy. The API is loopback-only,
+PostgreSQL is unpublished, `/docs` and `/openapi.json` return `404`, and the
+operator-release endpoint returns `503`. The database has zero state and command
+rows. Applied migration `0001_kyn_000b_state.sql` matches reviewed SHA-256
+`9e02acee4fbd16946973e8e17b274deab749b3b71c8d4fda188164e91e592ba2`.
+Release pages are public and enrollment is closed.
 
-The open-source license is also still an explicit KC decision. Until a `LICENSE`
-file is accepted, public source review does not grant copying or redistribution
-rights.
+Apache License 2.0, the operational release package, the one-subject provisional
+exception, and separate encrypted Pi recovery direction are accepted. Remaining
+activation work is the revision-labeled image rebuild, KYN-only backup repository,
+isolated restore, exact operator/relying-party and KC designation records, activation
+draft hashes, service-secret rotation, KC key creation, signed request, receipt,
+replay rejection, and redacted evidence. No missing observation is recorded as
+passed.

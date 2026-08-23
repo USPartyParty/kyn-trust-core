@@ -22,8 +22,9 @@ review before they become live policy.
 | Evidence classes and retention | pending | minimize; exceptional encrypted vault only |
 | Verifier caps and promotion thresholds | pending | no verifier dominates a pilot; promotion follows audited procedure |
 | Small-cell threshold | pending | suppress or combine risky aggregate cells |
-| Recovery and successor custodians | pending | separation of duties and tested transition required |
-| Open-source license | pending | select and add before public distribution |
+| Recovery and successor custodians | accepted for Gate B | KC/FLA is the initial recovery custodian; KYN uses a separately encrypted Pi repository and independent credentials, never the Campaign Committee backup repository; isolated restore must pass before activation |
+| Gate B storage posture | accepted exception | one KC-controlled subject may activate on the disclosed unencrypted provisional volume only after separate encrypted backup/restore; no sensitive evidence or ordinary enrollment; loss/backup failure stops the beta |
+| Open-source license | accepted | Apache License 2.0 |
 
 ## Automated-test profile
 

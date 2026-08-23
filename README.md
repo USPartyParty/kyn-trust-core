@@ -52,39 +52,33 @@ poll has been opened.
 
 ## Status and licensing
 
-KYN-000C and its deployment/activation tooling are implemented in source. The
-Optiplex is the active deployment target. Deployment advances concurrently with
-replacement storage and monitored power as the first public financial and polling
-goal. The architecture,
-operator designation, KC-first bootstrap, and requirement to label every assurance
-basis are accepted directions. Activation still requires fresh secret material,
-the PostgreSQL migration, restricted network exposure, backup/restore evidence,
-KC acceptance of the staged participant notices and operating terms, and an accepted
-operator release command. No fake participant records may be seeded into a live environment. KC is the
-only permitted first bootstrap subject; later participants must enter through real,
-consented journeys.
+KYN-000C and its deployment/activation tooling are implemented in source. A dark,
+empty Optiplex deployment runs a loopback-only healthy API and unpublished
+PostgreSQL database; no operator release, subject, command, claim, credential, or
+poll is active.
 
-The current dark, empty deployment may use the dedicated automatically mounted
-integration volume with only rotatable pre-activation service credentials. It must
-not activate KC, admit a participant, issue an authoritative credential, or retain
-irreplaceable evidence. Before any of those transitions, state moves to encrypted
-replacement storage, the pre-activation credentials rotate, and operator recovery
-plus clean restore must pass.
+KYN is licensed under the Apache License 2.0. Five Letter Agency operates KYN within
+The Party Party public project. The Korey Streich Campaign Committee is the separate
+AI for Wisconsin relying party. The exact 1.0.0 terms, privacy notice, consent
+notice, security process/contact, provisional-storage disclosure, and this
+operator/relying-party boundary are accepted operationally for the bounded KC-first
+Gate B package; that acceptance is not independent legal advice.
 
-The deterministic keys and secrets in tests are public test material and must never
-be reused. The current beta path stores pseudonymous protocol state and does not
-require names, emails, SSNs, government-ID images, or exact addresses. Exceptional
-evidence collection remains unimplemented and is not authorized. A public beta does
-not make a credential statutory proof of residence, citizenship, elector status, or
-identity, and no binding or determining poll is authorized.
+Gate B permits exactly one KC-controlled `bootstrap_vouched` subject on the disclosed
+unencrypted provisional volume as an explicit exception to the earlier
+encrypted-replacement-storage gate. The exception requires a separate encrypted KYN
+backup repository, independent credentials, successful isolated restore, rotated
+pre-activation service secrets, operator recovery, exact designation and backup
+evidence hashes, and KC's locally generated encrypted participant key before
+activation. It authorizes no sensitive evidence, ordinary public enrollment,
+verified-Wisconsin claim, binding or determining poll, or durable-production claim.
+Backup failure, inability to restore, unexpected exposure, or loss of separation
+stops the beta.
 
-The exact KYN 1.0.0 terms, privacy notice, consent notice, provisional-storage
-disclosure, and proposed security process are now staged as hash-verified public
-release candidates in the Party Party portal. KC activation acceptance, any required
-inter-organization agreement, backup/restore evidence, and the open-source license
-remain release gates. Until a license is selected and a
-`LICENSE` file is added, this repository alone grants no permission to copy, modify,
-or distribute the code.
+No fake participant records may be seeded into a live environment. KC is the only
+permitted first bootstrap subject. Later participants must enter through real,
+consented journeys after a separate Gate C opening decision. Deterministic keys and
+secrets in tests are public test material and must never be reused.
 
 ## Verify
 
