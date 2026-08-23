@@ -1,0 +1,14 @@
+{
+  "public_label": "KC Streich",
+  "designation_reference": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "policy_version": "1.0.0",
+  "expires_at": "2027-07-31T00:00:00Z",
+  "release_version": "1.0.0",
+  "notice_version": "1.0.0",
+  "terms_url": "https://usparty.party/kyn/terms/1.0.0",
+  "privacy_url": "https://usparty.party/kyn/privacy/1.0.0",
+  "operator_contact": "kc@uspartyparty.com",
+  "storage_posture": "provisional_beta",
+  "backup_evidence_reference": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "sensitive_evidence_enabled": false
+}

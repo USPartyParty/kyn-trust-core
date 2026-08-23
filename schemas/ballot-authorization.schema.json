@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.usparty.party/kyn/ballot-authorization.v1.json",
+  "title": "Ballot-scoped authorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["authorization_id", "ballot_id", "manifest_hash", "nullifier", "expires_at", "proof"],
+  "properties": {
+    "authorization_id": {"type": "string", "format": "uuid"},
+    "ballot_id": {"type": "string", "format": "uuid"},
+    "manifest_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "nullifier": {"type": "string", "pattern": "^nul_[A-Za-z0-9_-]{32,160}$"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "key_id", "value"],
+      "properties": {
+        "type": {"const": "Ed25519Signature2020"},
+        "key_id": {"type": "string", "minLength": 3, "maxLength": 200},
+        "value": {"type": "string", "pattern": "^[A-Za-z0-9_-]{86}$"}
+      }
+    }
+  }
+}

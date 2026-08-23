@@ -1,0 +1,56 @@
+[project]
+name = "kyn"
+version = "0.3.0"
+description = "Anonymous-first, claim-specific civic trust core"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "cryptography>=49,<50",
+  "fastapi>=0.116,<1",
+  "psycopg[binary]>=3.2,<4",
+  "pydantic-settings>=2.10,<3",
+  "sqlalchemy[asyncio]>=2.0.41,<3",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[project.scripts]
+kyn-api = "kyn.cli:api"
+kyn-migrate = "kyn.migrate:main"
+kyn-provision-secrets = "kyn.provision:main"
+kyn-activate = "kyn.activation:main"
+
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kyn"]
+
+[dependency-groups]
+dev = [
+  "aiosqlite>=0.21,<1",
+  "httpx>=0.28,<1",
+  "jsonschema>=4.25,<5",
+  "mypy>=1.17,<2",
+  "pytest>=8.4,<9",
+  "ruff>=0.12,<1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["A", "B", "C4", "E", "F", "I", "N", "PERF", "PIE", "PL", "PTH", "RUF", "S", "SIM", "UP", "W"]
+ignore = ["PLR0913"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR2004", "S101"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+packages = ["kyn"]

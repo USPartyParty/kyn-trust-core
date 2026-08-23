@@ -1,0 +1,12 @@
+{
+  "authorization_id": "019c1234-5678-7abc-8def-1123456789ab",
+  "ballot_id": "019c1234-5678-7abc-8def-2123456789ab",
+  "manifest_hash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "nullifier": "nul_SyntheticBallotNullifier_000000000001",
+  "expires_at": "2030-01-02T00:00:00Z",
+  "proof": {
+    "type": "Ed25519Signature2020",
+    "key_id": "synthetic-authorization-key-1",
+    "value": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+  }
+}

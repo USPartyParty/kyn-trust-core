@@ -1,0 +1,491 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Know Your Neighbor Trust Core API",
+    "version": "0.3.0",
+    "description": "KYN-000C public-beta contract. Mutations require body-bound participant proof of key control; root activation additionally requires the one-time operator bootstrap credential. Live peer attestations require an approved introduction. Source completeness does not represent deployment or real-participant enrollment."
+  },
+  "servers": [{"url": "https://kyn.usparty.party"}],
+  "paths": {
+    "/v1/bootstrap/activate": {
+      "post": {
+        "operationId": "activateBootstrapAuthority",
+        "security": [{"bootstrapBearer": [], "participantActionProof": []}],
+        "requestBody": {"$ref": "#/components/requestBodies/ActivateBootstrapAuthority"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/claim-definitions": {
+      "post": {
+        "operationId": "registerClaimDefinition",
+        "security": [{"participantActionProof": []}],
+        "requestBody": {"$ref": "#/components/requestBodies/RegisterClaimDefinition"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/subjects": {
+      "post": {
+        "operationId": "createSubject",
+        "security": [{"participantActionProof": []}],
+        "requestBody": {"$ref": "#/components/requestBodies/CreateSubject"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/subjects/{subject_id}/consents": {
+      "post": {
+        "operationId": "acceptConsent",
+        "security": [{"participantActionProof": []}],
+        "parameters": [{"$ref": "#/components/parameters/SubjectId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/SignedCommand"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/subjects/{subject_id}/recovery-commitments": {
+      "post": {
+        "operationId": "registerRecoveryCommitment",
+        "security": [{"participantActionProof": []}],
+        "parameters": [{"$ref": "#/components/parameters/SubjectId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/SignedCommand"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/recovery-cases": {
+      "post": {
+        "operationId": "requestRecovery",
+        "security": [{"participantActionProof": []}],
+        "requestBody": {"$ref": "#/components/requestBodies/SignedCommand"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/recovery-cases/{recovery_case_id}/decision": {
+      "post": {
+        "operationId": "decideRecovery",
+        "security": [{"participantActionProof": []}],
+        "parameters": [{"$ref": "#/components/parameters/RecoveryCaseId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/SignedCommand"},
+        "responses": {"200": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/subjects/{subject_id}/privacy-requests": {
+      "post": {
+        "operationId": "requestPrivacyAction",
+        "security": [{"participantActionProof": []}],
+        "parameters": [{"$ref": "#/components/parameters/SubjectId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/SignedCommand"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/privacy-requests/{privacy_request_id}/decision": {
+      "post": {
+        "operationId": "processPrivacyAction",
+        "security": [{"participantActionProof": []}],
+        "parameters": [{"$ref": "#/components/parameters/PrivacyRequestId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/SignedCommand"},
+        "responses": {"200": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/privacy-requests/{privacy_request_id}/export": {
+      "post": {
+        "operationId": "exportPrivacyData",
+        "security": [{"participantActionProof": []}],
+        "parameters": [{"$ref": "#/components/parameters/PrivacyRequestId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/SignedCommand"},
+        "responses": {"200": {"description": "Subject-scoped portable export and receipt"}}
+      }
+    },
+    "/v1/claim-requests": {
+      "post": {
+        "operationId": "requestClaim",
+        "security": [{"participantActionProof": []}],
+        "requestBody": {"$ref": "#/components/requestBodies/RequestClaim"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/verifier-grants": {
+      "post": {
+        "operationId": "grantVerifier",
+        "requestBody": {"$ref": "#/components/requestBodies/GrantVerifier"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/authority-grants": {
+      "post": {
+        "operationId": "grantAuthority",
+        "security": [{"participantActionProof": []}],
+        "requestBody": {"$ref": "#/components/requestBodies/GrantAuthority"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/authority-grants/{authority_grant_id}/revocation": {
+      "post": {
+        "operationId": "revokeAuthority",
+        "security": [{"participantActionProof": []}],
+        "parameters": [{"$ref": "#/components/parameters/AuthorityGrantId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/RevokeAuthority"},
+        "responses": {"200": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/authority-promotions": {
+      "post": {
+        "operationId": "promoteAuthority",
+        "security": [{"participantActionProof": []}],
+        "requestBody": {"$ref": "#/components/requestBodies/PromoteAuthority"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/attestor-invitations": {
+      "post": {
+        "operationId": "inviteAttestor",
+        "requestBody": {"$ref": "#/components/requestBodies/InviteAttestor"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/introductions": {
+      "post": {
+        "operationId": "introduceAttestor",
+        "requestBody": {"$ref": "#/components/requestBodies/IntroduceAttestor"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/attestations": {
+      "post": {
+        "operationId": "issueAttestation",
+        "requestBody": {"$ref": "#/components/requestBodies/IssueAttestation"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/claim-requests/{request_id}/bootstrap-attestation": {
+      "post": {
+        "operationId": "issueBootstrapAttestation",
+        "security": [{"participantActionProof": []}],
+        "parameters": [{"$ref": "#/components/parameters/RequestId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/IssueBootstrapAttestation"},
+        "responses": {"200": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/audits": {
+      "post": {
+        "operationId": "selectAudit",
+        "requestBody": {"$ref": "#/components/requestBodies/SelectAudit"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/audits/{audit_id}/decision": {
+      "post": {
+        "operationId": "decideAudit",
+        "parameters": [{"$ref": "#/components/parameters/AuditId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/DecideAudit"},
+        "responses": {"200": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/challenges": {
+      "post": {
+        "operationId": "openChallenge",
+        "requestBody": {"$ref": "#/components/requestBodies/OpenChallenge"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/challenges/{challenge_id}/response": {
+      "post": {
+        "operationId": "respondToChallenge",
+        "parameters": [{"$ref": "#/components/parameters/ChallengeId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/RespondToChallenge"},
+        "responses": {"200": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/challenges/{challenge_id}/decision": {
+      "post": {
+        "operationId": "decideChallenge",
+        "parameters": [{"$ref": "#/components/parameters/ChallengeId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/DecideChallenge"},
+        "responses": {"200": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/challenges/{challenge_id}/appeal": {
+      "post": {
+        "operationId": "appealChallenge",
+        "parameters": [{"$ref": "#/components/parameters/ChallengeId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/AppealChallenge"},
+        "responses": {"200": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/challenges/{challenge_id}/appeal-decision": {
+      "post": {
+        "operationId": "decideAppeal",
+        "parameters": [{"$ref": "#/components/parameters/ChallengeId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/DecideAppeal"},
+        "responses": {"200": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/verifier-grants/{grant_id}/revocation": {
+      "post": {
+        "operationId": "revokeVerifierGrant",
+        "parameters": [{"$ref": "#/components/parameters/GrantId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/RevokeVerifierGrant"},
+        "responses": {"200": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/credentials/{credential_id}/presentations": {
+      "post": {
+        "operationId": "presentCredential",
+        "security": [{"participantActionProof": []}],
+        "parameters": [{"$ref": "#/components/parameters/CredentialId"}],
+        "requestBody": {"$ref": "#/components/requestBodies/PresentCredential"},
+        "responses": {"201": {"$ref": "#/components/responses/Presentation"}}
+      }
+    },
+    "/v1/status/{credential_id}": {
+      "get": {
+        "operationId": "getCredentialStatus",
+        "parameters": [{"$ref": "#/components/parameters/CredentialId"}],
+        "responses": {"200": {"$ref": "#/components/responses/CredentialStatus"}}
+      }
+    },
+    "/v1/events": {
+      "get": {
+        "operationId": "listPublicEvents",
+        "responses": {"200": {"$ref": "#/components/responses/PublicEvents"}}
+      }
+    },
+    "/v1/operator-release": {
+      "get": {
+        "operationId": "getOperatorRelease",
+        "responses": {"200": {"description": "Active, public-safe KYN operator release"}}
+      }
+    },
+    "/v1/operator-releases": {
+      "post": {
+        "operationId": "registerOperatorRelease",
+        "security": [{"participantActionProof": []}],
+        "requestBody": {"$ref": "#/components/requestBodies/SignedCommand"},
+        "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/receipts/{receipt_id}": {
+      "get": {
+        "operationId": "getReceipt",
+        "parameters": [{"$ref": "#/components/parameters/ReceiptId"}],
+        "responses": {"200": {"$ref": "#/components/responses/Receipt"}}
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bootstrapBearer": {"type": "http", "scheme": "bearer", "description": "One-time secret used only to activate the accepted bootstrap designation"},
+      "participantActionProof": {"type": "apiKey", "in": "header", "name": "X-KYN-Action-Proof", "description": "Conceptual marker for the body-bound Ed25519 action proof fields; the proof is carried in each strict request body"}
+    },
+    "parameters": {
+      "AuthorityGrantId": {"name": "authority_grant_id", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/AuthorityGrantId"}},
+      "AuditId": {"name": "audit_id", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/AuditId"}},
+      "ChallengeId": {"name": "challenge_id", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/ChallengeId"}},
+      "CredentialId": {"name": "credential_id", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/CredentialId"}},
+      "GrantId": {"name": "grant_id", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/GrantId"}},
+      "ReceiptId": {"name": "receipt_id", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/ReceiptId"}}
+      ,"RequestId": {"name": "request_id", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/RequestId"}},
+      "SubjectId": {"name": "subject_id", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/SubjectId"}},
+      "RecoveryCaseId": {"name": "recovery_case_id", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/RecoveryCaseId"}},
+      "PrivacyRequestId": {"name": "privacy_request_id", "in": "path", "required": true, "schema": {"$ref": "#/components/schemas/PrivacyRequestId"}}
+    },
+    "requestBodies": {
+      "ActivateBootstrapAuthority": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ActivateBootstrapAuthorityInput"}}}},
+      "RegisterClaimDefinition": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RegisterClaimDefinitionInput"}}}},
+      "CreateSubject": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CreateSubjectInput"}}}},
+      "RequestClaim": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RequestClaimInput"}}}},
+      "GrantVerifier": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GrantVerifierInput"}}}},
+      "GrantAuthority": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/GrantAuthorityInput"}}}},
+      "PromoteAuthority": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PromoteAuthorityInput"}}}},
+      "RevokeAuthority": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RevokeAuthorityInput"}}}},
+      "InviteAttestor": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/InviteAttestorInput"}}}},
+      "IntroduceAttestor": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/IntroduceAttestorInput"}}}},
+      "IssueAttestation": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/IssueAttestationInput"}}}},
+      "IssueBootstrapAttestation": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/IssueBootstrapAttestationInput"}}}},
+      "SelectAudit": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SelectAuditInput"}}}},
+      "DecideAudit": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DecideAuditInput"}}}},
+      "OpenChallenge": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/OpenChallengeInput"}}}},
+      "RespondToChallenge": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RespondToChallengeInput"}}}},
+      "DecideChallenge": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DecideChallengeInput"}}}},
+      "AppealChallenge": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AppealChallengeInput"}}}},
+      "DecideAppeal": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DecideAppealInput"}}}},
+      "RevokeVerifierGrant": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/RevokeVerifierGrantInput"}}}},
+      "PresentCredential": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/PresentCredentialInput"}}}},
+      "SignedCommand": {"required": true, "description": "The exact endpoint schema is published by the running FastAPI service; all fields are strict and the proof is body-bound.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SignedCommandInput"}}}}
+    },
+    "responses": {
+      "OperationResult": {"description": "Strict state transition records and privacy-safe receipt", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/OperationResult"}}}},
+      "Presentation": {"description": "Pairwise minimum-disclosure presentation", "content": {"application/json": {"schema": {"$ref": "https://schemas.usparty.party/kyn/credential-presentation.v1.json"}}}},
+      "CredentialStatus": {"description": "Public-safe credential status", "content": {"application/json": {"schema": {"$ref": "https://schemas.usparty.party/kyn/trust-core-records.v1.json#/$defs/credentialStatus"}}}},
+      "PublicEvents": {"description": "Public-safe events only", "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "https://schemas.usparty.party/kyn/trust-core-records.v1.json#/$defs/publicEvent"}}}}},
+      "Receipt": {"description": "Privacy-safe operation receipt", "content": {"application/json": {"schema": {"$ref": "https://schemas.usparty.party/kyn/trust-core-records.v1.json#/$defs/receipt"}}}}
+    },
+    "schemas": {
+      "AuthorityGrantId": {"type": "string", "pattern": "^agr_[A-Za-z0-9_-]{8,120}$"},
+      "AuditId": {"type": "string", "pattern": "^aud_[A-Za-z0-9_-]{8,120}$"},
+      "ChallengeId": {"type": "string", "pattern": "^chg_[A-Za-z0-9_-]{8,120}$"},
+      "CredentialId": {"type": "string", "pattern": "^crd_[A-Za-z0-9_-]{8,120}$"},
+      "GrantId": {"type": "string", "pattern": "^grt_[A-Za-z0-9_-]{8,120}$"},
+      "ReceiptId": {"type": "string", "pattern": "^rcp_[A-Za-z0-9_-]{32,120}$"},
+      "SubjectId": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+      "RequestId": {"type": "string", "pattern": "^clm_[A-Za-z0-9_-]{8,120}$"},
+      "RecoveryCaseId": {"type": "string", "pattern": "^rcv_[A-Za-z0-9_-]{8,120}$"},
+      "PrivacyRequestId": {"type": "string", "pattern": "^prv_[A-Za-z0-9_-]{8,120}$"},
+      "Timestamp": {"type": "string", "format": "date-time"},
+      "SemanticVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+      "VerificationBasis": {"enum": ["self_asserted", "bootstrap_vouched", "peer_attested", "official_source_checked", "independently_reviewed", "audit_corroborated"]},
+      "AuthorityCapability": {"enum": ["manage_claims", "invite_attestor", "introduce_attestor", "attest_claim", "select_audit", "decide_audit", "decide_challenge", "decide_appeal", "grant_authority", "revoke_authority", "decide_recovery", "process_privacy", "manage_release", "operate_service"]},
+      "AuthorityTier": {"enum": ["participant", "provisional_verifier", "verifier", "steward", "operator"]},
+      "ActionProof": {
+        "type": "object", "additionalProperties": false,
+        "required": ["nonce", "issued_at", "signature"],
+        "properties": {
+          "nonce": {"type": "string", "pattern": "^[A-Za-z0-9_-]{16,120}$"},
+          "issued_at": {"$ref": "#/components/schemas/Timestamp"},
+          "signature": {"type": "string", "pattern": "^[A-Za-z0-9_-]{86}$"}
+        }
+      },
+      "SignedCommandInput": {
+        "type": "object",
+        "required": ["proof"],
+        "properties": {"proof": {"$ref": "#/components/schemas/ActionProof"}}
+      },
+      "ActivateBootstrapAuthorityInput": {
+        "type": "object", "additionalProperties": false,
+        "required": ["participant_key", "public_label", "designation_reference", "policy_version", "expires_at", "proof"],
+        "properties": {
+          "participant_key": {"type": "string", "pattern": "^did:key:ed25519:[A-Za-z0-9_-]{43}$"},
+          "public_label": {"type": "string", "minLength": 1, "maxLength": 120},
+          "designation_reference": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+          "policy_version": {"$ref": "#/components/schemas/SemanticVersion"},
+          "expires_at": {"$ref": "#/components/schemas/Timestamp"},
+          "proof": {"$ref": "#/components/schemas/ActionProof"}
+        }
+      },
+      "GrantAuthorityInput": {
+        "type": "object", "additionalProperties": false,
+        "required": ["actor_authority_grant_id", "holder_subject_id", "capabilities", "claim_types", "method_classes", "tier", "expires_at", "usage_cap", "can_delegate", "max_delegation_depth", "public_accountability_label", "proof"],
+        "properties": {
+          "actor_authority_grant_id": {"$ref": "#/components/schemas/AuthorityGrantId"},
+          "holder_subject_id": {"$ref": "#/components/schemas/SubjectId"},
+          "capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/components/schemas/AuthorityCapability"}},
+          "claim_types": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+          "method_classes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+          "tier": {"$ref": "#/components/schemas/AuthorityTier"},
+          "expires_at": {"$ref": "#/components/schemas/Timestamp"},
+          "usage_cap": {"type": ["integer", "null"], "minimum": 1},
+          "can_delegate": {"type": "boolean"},
+          "max_delegation_depth": {"type": "integer", "minimum": 0, "maximum": 16},
+          "public_accountability_label": {"type": ["string", "null"], "maxLength": 120},
+          "proof": {"$ref": "#/components/schemas/ActionProof"}
+        }
+      },
+      "PromoteAuthorityInput": {
+        "type": "object", "additionalProperties": false,
+        "required": ["actor_authority_grant_id", "source_authority_grant_ids", "resulting_tier", "capabilities", "expires_at", "public_accountability_label", "proof"],
+        "properties": {
+          "actor_authority_grant_id": {"$ref": "#/components/schemas/AuthorityGrantId"},
+          "source_authority_grant_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/components/schemas/AuthorityGrantId"}},
+          "resulting_tier": {"$ref": "#/components/schemas/AuthorityTier"},
+          "capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/components/schemas/AuthorityCapability"}},
+          "expires_at": {"$ref": "#/components/schemas/Timestamp"},
+          "public_accountability_label": {"type": ["string", "null"], "maxLength": 120},
+          "proof": {"$ref": "#/components/schemas/ActionProof"}
+        }
+      },
+      "RevokeAuthorityInput": {
+        "type": "object", "additionalProperties": false,
+        "required": ["actor_authority_grant_id", "reason_code", "proof"],
+        "properties": {
+          "actor_authority_grant_id": {"$ref": "#/components/schemas/AuthorityGrantId"},
+          "reason_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,99}$"},
+          "proof": {"$ref": "#/components/schemas/ActionProof"}
+        }
+      },
+      "IssueBootstrapAttestationInput": {
+        "type": "object", "additionalProperties": false,
+        "required": ["authority_grant_id", "expires_at", "proof"],
+        "properties": {
+          "authority_grant_id": {"$ref": "#/components/schemas/AuthorityGrantId"},
+          "expires_at": {"$ref": "#/components/schemas/Timestamp"},
+          "proof": {"$ref": "#/components/schemas/ActionProof"}
+        }
+      },
+      "RegisterClaimDefinitionInput": {
+        "type": "object", "additionalProperties": false,
+        "required": ["actor_authority_grant_id", "claim_type", "definition_version", "policy_version", "method_class", "allowed_verification_bases", "required_verification_bases", "minimum_attestations", "minimum_independent_paths", "minimum_passed_audits", "proof"],
+        "properties": {
+          "actor_authority_grant_id": {"$ref": "#/components/schemas/AuthorityGrantId"},
+          "claim_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,119}$"},
+          "definition_version": {"$ref": "#/components/schemas/SemanticVersion"},
+          "policy_version": {"$ref": "#/components/schemas/SemanticVersion"},
+          "method_class": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,79}$"},
+          "allowed_verification_bases": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/components/schemas/VerificationBasis"}},
+          "required_verification_bases": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/components/schemas/VerificationBasis"}},
+          "minimum_attestations": {"type": "integer", "minimum": 0},
+          "minimum_independent_paths": {"type": "integer", "minimum": 0},
+          "minimum_passed_audits": {"type": "integer", "minimum": 0},
+          "proof": {"$ref": "#/components/schemas/ActionProof"}
+        }
+      },
+      "CreateSubjectInput": {
+        "type": "object", "additionalProperties": false, "required": ["participant_key", "proof"],
+        "properties": {
+          "participant_key": {"type": "string", "pattern": "^did:key:ed25519:[A-Za-z0-9_-]{43}$"},
+          "proof": {"$ref": "#/components/schemas/ActionProof"}
+        }
+      },
+      "RequestClaimInput": {
+        "type": "object", "additionalProperties": false,
+        "required": ["subject_id", "claim_type", "definition_version", "policy_version", "proof"],
+        "properties": {
+          "subject_id": {"$ref": "#/components/schemas/SubjectId"},
+          "claim_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,119}$"},
+          "definition_version": {"$ref": "#/components/schemas/SemanticVersion"},
+          "policy_version": {"$ref": "#/components/schemas/SemanticVersion"},
+          "proof": {"$ref": "#/components/schemas/ActionProof"}
+        }
+      },
+      "GrantVerifierInput": {
+        "type": "object", "additionalProperties": false,
+        "required": ["verifier_subject_id", "claim_type", "method_classes", "attestation_cap", "expires_at", "authority_basis"],
+        "properties": {
+          "verifier_subject_id": {"$ref": "#/components/schemas/SubjectId"},
+          "claim_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,119}$"},
+          "method_classes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,79}$"}},
+          "attestation_cap": {"type": "integer", "minimum": 1, "maximum": 10000},
+          "expires_at": {"$ref": "#/components/schemas/Timestamp"},
+          "authority_basis": {"enum": ["synthetic_root_review", "audited_procedure"]}
+        }
+      },
+      "InviteAttestorInput": {
+        "type": "object", "additionalProperties": false, "required": ["request_id", "verifier_subject_id", "expires_at", "proof"],
+        "properties": {"request_id": {"$ref": "#/components/schemas/RequestId"}, "verifier_subject_id": {"$ref": "#/components/schemas/SubjectId"}, "expires_at": {"$ref": "#/components/schemas/Timestamp"}, "proof": {"$ref": "#/components/schemas/ActionProof"}}
+      },
+      "IntroduceAttestorInput": {
+        "type": "object", "additionalProperties": false, "required": ["actor_authority_grant_id", "request_id", "introducer_subject_id", "invited_verifier_subject_id", "expires_at", "proof"],
+        "properties": {"actor_authority_grant_id": {"$ref": "#/components/schemas/AuthorityGrantId"}, "request_id": {"$ref": "#/components/schemas/RequestId"}, "introducer_subject_id": {"$ref": "#/components/schemas/SubjectId"}, "invited_verifier_subject_id": {"$ref": "#/components/schemas/SubjectId"}, "expires_at": {"$ref": "#/components/schemas/Timestamp"}, "proof": {"$ref": "#/components/schemas/ActionProof"}}
+      },
+      "IssueAttestationInput": {
+        "type": "object", "additionalProperties": false, "required": ["invitation_id", "authority_grant_id", "introduction_id", "method_class", "expires_at", "verification_basis", "proof"],
+        "properties": {"invitation_id": {"type": "string", "pattern": "^inv_[A-Za-z0-9_-]{8,120}$"}, "authority_grant_id": {"$ref": "#/components/schemas/AuthorityGrantId"}, "introduction_id": {"type": "string", "pattern": "^int_[A-Za-z0-9_-]{8,120}$"}, "method_class": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,79}$"}, "expires_at": {"$ref": "#/components/schemas/Timestamp"}, "verification_basis": {"$ref": "#/components/schemas/VerificationBasis"}, "proof": {"$ref": "#/components/schemas/ActionProof"}}
+      },
+      "SelectAuditInput": {
+        "type": "object", "additionalProperties": false, "required": ["attestation_id", "basis", "selection_seed"],
+        "properties": {"attestation_id": {"type": "string", "pattern": "^att_[A-Za-z0-9_-]{8,120}$"}, "basis": {"enum": ["random", "risk"]}, "selection_seed": {"type": "string", "minLength": 8, "maxLength": 200}}
+      },
+      "DecideAuditInput": {"type": "object", "additionalProperties": false, "required": ["passed"], "properties": {"passed": {"type": "boolean"}}},
+      "OpenChallengeInput": {"type": "object", "additionalProperties": false, "required": ["attestation_id", "reason_code"], "properties": {"attestation_id": {"type": "string", "pattern": "^att_[A-Za-z0-9_-]{8,120}$"}, "reason_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,99}$"}}},
+      "RespondToChallengeInput": {"type": "object", "additionalProperties": false, "required": ["response_code"], "properties": {"response_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,99}$"}}},
+      "DecideChallengeInput": {"type": "object", "additionalProperties": false, "required": ["decision"], "properties": {"decision": {"enum": ["dismissed", "sustained"]}}},
+      "AppealChallengeInput": {"type": "object", "additionalProperties": false, "required": ["appeal_reason_code"], "properties": {"appeal_reason_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,99}$"}}},
+      "DecideAppealInput": {"type": "object", "additionalProperties": false, "required": ["decision"], "properties": {"decision": {"enum": ["affirmed", "reversed"]}}},
+      "RevokeVerifierGrantInput": {"type": "object", "additionalProperties": false, "required": ["reason_code"], "properties": {"reason_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,99}$"}}},
+      "PresentCredentialInput": {"type": "object", "additionalProperties": false, "required": ["audience", "proof"], "properties": {"audience": {"type": "string", "minLength": 1, "maxLength": 200}, "proof": {"$ref": "#/components/schemas/ActionProof"}}},
+      "OperationResult": {
+        "type": "object", "additionalProperties": false, "required": ["records", "receipt"],
+        "properties": {
+          "records": {"type": "array", "minItems": 1, "items": {"$ref": "https://schemas.usparty.party/kyn/trust-core-records.v1.json"}},
+          "receipt": {"$ref": "https://schemas.usparty.party/kyn/trust-core-records.v1.json#/$defs/receipt"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,152 @@
+name: kyn-public-beta
+
+x-service-security: &service-security
+  read_only: true
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  pids_limit: 128
+  restart: unless-stopped
+  logging:
+    driver: local
+    options:
+      max-size: 10m
+      max-file: "3"
+
+x-kyn-environment: &kyn-environment
+  KYN_ENVIRONMENT: production
+  KYN_DATABASE_URL_FILE: /run/secrets/kyn/database-url
+  KYN_ISSUER: ${KYN_ISSUER:?set KYN_ISSUER}
+  KYN_POLICY_PROFILE: kyn-000c-public-beta-v1
+  KYN_BOOTSTRAP_PUBLIC_LABEL: KC Streich
+  KYN_SIGNING_KEY_ID: kyn-beta-presentation-1
+  KYN_SIGNING_SEED_FILE: /run/secrets/kyn/signing.seed
+  KYN_PAIRWISE_SECRET_FILE: /run/secrets/kyn/pairwise.secret
+  KYN_RECEIPT_SECRET_FILE: /run/secrets/kyn/receipt.secret
+  KYN_BOOTSTRAP_TOKEN_FILE: /run/secrets/kyn/bootstrap.token
+  KYN_BIND_HOST: 0.0.0.0
+  KYN_BIND_PORT: "8090"
+  KYN_FORWARDED_ALLOW_IPS: 127.0.0.1
+
+services:
+  kyn-provision:
+    profiles: ["tools"]
+    image: kyn:0.3.0
+    build:
+      context: ..
+      dockerfile: Containerfile
+    user: "0:0"
+    read_only: true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ${KYN_SECRET_ROOT:?set KYN_SECRET_ROOT}:/secrets:rw
+      - ${KYN_STATE_ROOT:?set KYN_STATE_ROOT}:/state:rw
+    command:
+      - kyn-provision-secrets
+      - --root
+      - /secrets
+      - --state-root
+      - /state
+
+  kyn-database:
+    image: docker.io/pgvector/pgvector:0.8.5-pg17-trixie@sha256:69573b32242ca232f65871d4cb916ba7210a372b9bd74068204c1a9a57bada4f
+    user: "999:10010"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    restart: unless-stopped
+    mem_limit: 384m
+    command: ["postgres", "-c", "max_connections=30", "-c", "log_statement=none"]
+    environment:
+      POSTGRES_DB: kyn
+      POSTGRES_USER: kyn
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres-password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m,uid=999,gid=10010
+      - /var/run/postgresql:rw,noexec,nosuid,size=16m,uid=999,gid=10010
+    volumes:
+      - ${KYN_SECRET_ROOT}/postgres:/run/secrets:ro
+      - ${KYN_STATE_ROOT}/database:/var/lib/postgresql/data:rw
+    networks:
+      - kyn_data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kyn -d kyn"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  kyn-migrate:
+    <<: *service-security
+    image: kyn:0.3.0
+    build:
+      context: ..
+      dockerfile: Containerfile
+    user: "10010:10010"
+    restart: "no"
+    environment: *kyn-environment
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m,uid=10010,gid=10010
+    volumes:
+      - ${KYN_SECRET_ROOT}/service:/run/secrets/kyn:ro
+    networks:
+      - kyn_data
+    depends_on:
+      kyn-database:
+        condition: service_healthy
+    command: ["kyn-migrate", "--directory", "/app/migrations"]
+
+  kyn-api:
+    <<: *service-security
+    image: kyn:0.3.0
+    build:
+      context: ..
+      dockerfile: Containerfile
+    user: "10010:10010"
+    mem_limit: 256m
+    environment: *kyn-environment
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m,uid=10010,gid=10010
+    volumes:
+      - ${KYN_SECRET_ROOT}/service:/run/secrets/kyn:ro
+    networks:
+      - kyn_api
+      - kyn_data
+    ports:
+      - "127.0.0.1:${KYN_LOOPBACK_PORT:-8090}:8090"
+    depends_on:
+      kyn-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/v1/system/health', timeout=3).read()"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+networks:
+  kyn_api:
+    driver: bridge
+  kyn_data:
+    internal: true

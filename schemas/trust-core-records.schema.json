@@ -1,0 +1,368 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.usparty.party/kyn/trust-core-records.v1.json",
+  "title": "KYN synthetic Trust Core records",
+  "oneOf": [
+    {"$ref": "#/$defs/subject"},
+    {"$ref": "#/$defs/operatorRelease"},
+    {"$ref": "#/$defs/consentRecord"},
+    {"$ref": "#/$defs/recoveryCommitment"},
+    {"$ref": "#/$defs/recoveryCase"},
+    {"$ref": "#/$defs/privacyRequest"},
+    {"$ref": "#/$defs/claimDefinition"},
+    {"$ref": "#/$defs/claimRequest"},
+    {"$ref": "#/$defs/introduction"},
+    {"$ref": "#/$defs/attestorInvitation"},
+    {"$ref": "#/$defs/verifierGrant"},
+    {"$ref": "#/$defs/bootstrapAuthority"},
+    {"$ref": "#/$defs/authorityGrant"},
+    {"$ref": "#/$defs/authorityPromotion"},
+    {"$ref": "#/$defs/attestation"},
+    {"$ref": "#/$defs/audit"},
+    {"$ref": "#/$defs/challenge"},
+    {"$ref": "#/$defs/credential"},
+    {"$ref": "#/$defs/credentialStatus"},
+    {"$ref": "#/$defs/publicEvent"},
+    {"$ref": "#/$defs/receipt"}
+  ],
+  "$defs": {
+    "timestamp": {"type": "string", "format": "date-time"},
+    "semanticVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "verificationBasis": {"enum": ["self_asserted", "bootstrap_vouched", "peer_attested", "official_source_checked", "independently_reviewed", "audit_corroborated"]},
+    "authorityCapability": {"enum": ["manage_claims", "invite_attestor", "introduce_attestor", "attest_claim", "select_audit", "decide_audit", "decide_challenge", "decide_appeal", "grant_authority", "revoke_authority", "decide_recovery", "process_privacy", "manage_release", "operate_service"]},
+    "authorityTier": {"enum": ["participant", "provisional_verifier", "verifier", "steward", "operator"]},
+    "authorityBasis": {"enum": ["bootstrap_designation", "delegated", "independent_review", "audited_promotion"]},
+    "claimDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "claim_type", "definition_version", "policy_version", "method_class", "allowed_verification_bases", "required_verification_bases", "minimum_attestations", "minimum_independent_paths", "minimum_passed_audits"],
+      "properties": {
+        "record_type": {"const": "claim_definition"},
+        "claim_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,119}$"},
+        "definition_version": {"$ref": "#/$defs/semanticVersion"},
+        "policy_version": {"$ref": "#/$defs/semanticVersion"},
+        "method_class": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,79}$"},
+        "allowed_verification_bases": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/verificationBasis"}},
+        "required_verification_bases": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/verificationBasis"}},
+        "minimum_attestations": {"type": ["integer", "null"], "minimum": 0},
+        "minimum_independent_paths": {"type": ["integer", "null"], "minimum": 0},
+        "minimum_passed_audits": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "subject_id", "participant_key", "created_at", "deleted_at"],
+      "properties": {
+        "record_type": {"const": "subject"},
+        "subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "participant_key": {"type": ["string", "null"], "pattern": "^did:key:[A-Za-z0-9._:-]{8,300}$"},
+        "created_at": {"$ref": "#/$defs/timestamp"},
+        "deleted_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]}
+      }
+    },
+    "operatorRelease": {
+      "type": "object", "additionalProperties": false,
+      "required": ["record_type", "release_id", "release_version", "notice_version", "terms_url", "privacy_url", "operator_contact", "storage_posture", "backup_evidence_reference", "sensitive_evidence_enabled", "activated_by_authority_grant_id", "activated_at", "supersedes_release_id", "suspended_at"],
+      "properties": {
+        "record_type": {"const": "operator_release"},
+        "release_id": {"type": "string", "pattern": "^rel_[A-Za-z0-9_-]{8,120}$"},
+        "release_version": {"$ref": "#/$defs/semanticVersion"},
+        "notice_version": {"$ref": "#/$defs/semanticVersion"},
+        "terms_url": {"type": "string", "format": "uri"},
+        "privacy_url": {"type": "string", "format": "uri"},
+        "operator_contact": {"type": "string", "minLength": 3, "maxLength": 200},
+        "storage_posture": {"enum": ["provisional_beta", "durable_production"]},
+        "backup_evidence_reference": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "sensitive_evidence_enabled": {"const": false},
+        "activated_by_authority_grant_id": {"type": "string", "pattern": "^agr_[A-Za-z0-9_-]{8,120}$"},
+        "activated_at": {"$ref": "#/$defs/timestamp"},
+        "supersedes_release_id": {"type": ["string", "null"], "pattern": "^rel_[A-Za-z0-9_-]{8,120}$"},
+        "suspended_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]}
+      }
+    },
+    "consentRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["record_type", "consent_id", "subject_id", "notice_version", "purposes", "granted_at", "withdrawn_at"],
+      "properties": {
+        "record_type": {"const": "consent_record"},
+        "consent_id": {"type": "string", "pattern": "^cns_[A-Za-z0-9_-]{8,120}$"},
+        "subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "notice_version": {"$ref": "#/$defs/semanticVersion"},
+        "purposes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^kyn_[a-z0-9_]{2,100}$"}},
+        "granted_at": {"$ref": "#/$defs/timestamp"},
+        "withdrawn_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]}
+      }
+    },
+    "recoveryCommitment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["record_type", "recovery_commitment_id", "subject_id", "commitment", "created_at", "consumed_at"],
+      "properties": {
+        "record_type": {"const": "recovery_commitment"},
+        "recovery_commitment_id": {"type": "string", "pattern": "^rcm_[A-Za-z0-9_-]{8,120}$"},
+        "subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "commitment": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "created_at": {"$ref": "#/$defs/timestamp"},
+        "consumed_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]}
+      }
+    },
+    "recoveryCase": {
+      "type": "object", "additionalProperties": false,
+      "required": ["record_type", "recovery_case_id", "subject_id", "recovery_commitment_id", "prior_key_digest", "replacement_participant_key", "requested_at", "state", "decided_by_authority_grant_id", "decided_at", "decision_reason_code"],
+      "properties": {
+        "record_type": {"const": "recovery_case"},
+        "recovery_case_id": {"type": "string", "pattern": "^rcv_[A-Za-z0-9_-]{8,120}$"},
+        "subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "recovery_commitment_id": {"type": "string", "pattern": "^rcm_[A-Za-z0-9_-]{8,120}$"},
+        "prior_key_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "replacement_participant_key": {"type": "string", "pattern": "^did:key:ed25519:[A-Za-z0-9_-]{43}$"},
+        "requested_at": {"$ref": "#/$defs/timestamp"},
+        "state": {"enum": ["pending", "approved", "rejected"]},
+        "decided_by_authority_grant_id": {"type": ["string", "null"], "pattern": "^agr_[A-Za-z0-9_-]{8,120}$"},
+        "decided_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+        "decision_reason_code": {"type": ["string", "null"], "maxLength": 100}
+      }
+    },
+    "privacyRequest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["record_type", "privacy_request_id", "subject_id", "kind", "reason_code", "requested_at", "state", "decided_by_authority_grant_id", "decided_at", "decision_reason_code"],
+      "properties": {
+        "record_type": {"const": "privacy_request"},
+        "privacy_request_id": {"type": "string", "pattern": "^prv_[A-Za-z0-9_-]{8,120}$"},
+        "subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "kind": {"enum": ["export", "correction", "deletion", "consent_withdrawal"]},
+        "reason_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,99}$"},
+        "requested_at": {"$ref": "#/$defs/timestamp"},
+        "state": {"enum": ["pending", "completed", "rejected"]},
+        "decided_by_authority_grant_id": {"type": ["string", "null"], "pattern": "^agr_[A-Za-z0-9_-]{8,120}$"},
+        "decided_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+        "decision_reason_code": {"type": ["string", "null"], "maxLength": 100}
+      }
+    },
+    "claimRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "request_id", "subject_id", "claim", "requested_at"],
+      "properties": {
+        "record_type": {"const": "claim_request"},
+        "request_id": {"type": "string", "pattern": "^clm_[A-Za-z0-9_-]{8,120}$"},
+        "subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "claim": {"$ref": "#/$defs/claimDefinition"},
+        "requested_at": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "introduction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "introduction_id", "request_id", "introducer_subject_id", "invited_verifier_subject_id", "created_at", "expires_at"],
+      "properties": {
+        "record_type": {"const": "introduction"},
+        "introduction_id": {"type": "string", "pattern": "^int_[A-Za-z0-9_-]{8,120}$"},
+        "request_id": {"type": "string", "pattern": "^clm_[A-Za-z0-9_-]{8,120}$"},
+        "introducer_subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "invited_verifier_subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "created_at": {"$ref": "#/$defs/timestamp"},
+        "expires_at": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "attestorInvitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "invitation_id", "request_id", "verifier_subject_id", "created_at", "expires_at"],
+      "properties": {
+        "record_type": {"const": "attestor_invitation"},
+        "invitation_id": {"type": "string", "pattern": "^inv_[A-Za-z0-9_-]{8,120}$"},
+        "request_id": {"type": "string", "pattern": "^clm_[A-Za-z0-9_-]{8,120}$"},
+        "verifier_subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "created_at": {"$ref": "#/$defs/timestamp"},
+        "expires_at": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "verifierGrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "grant_id", "verifier_subject_id", "claim_type", "method_classes", "attestation_cap", "issued_at", "expires_at", "authority_basis", "revoked_at"],
+      "properties": {
+        "record_type": {"const": "verifier_grant"},
+        "grant_id": {"type": "string", "pattern": "^grt_[A-Za-z0-9_-]{8,120}$"},
+        "verifier_subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "claim_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,119}$"},
+        "method_classes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,79}$"}},
+        "attestation_cap": {"type": "integer", "minimum": 1, "maximum": 10000},
+        "issued_at": {"$ref": "#/$defs/timestamp"},
+        "expires_at": {"$ref": "#/$defs/timestamp"},
+        "authority_basis": {"enum": ["synthetic_root_review", "audited_procedure"]},
+        "revoked_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]}
+      }
+    },
+    "bootstrapAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "bootstrap_id", "policy_version", "authority_subject_id", "public_label", "designation_reference", "activated_at", "expires_at", "non_transitive"],
+      "properties": {
+        "record_type": {"const": "bootstrap_authority"},
+        "bootstrap_id": {"type": "string", "pattern": "^bst_[A-Za-z0-9_-]{8,120}$"},
+        "policy_version": {"$ref": "#/$defs/semanticVersion"},
+        "authority_subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "public_label": {"type": "string", "minLength": 1, "maxLength": 120},
+        "designation_reference": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "activated_at": {"$ref": "#/$defs/timestamp"},
+        "expires_at": {"$ref": "#/$defs/timestamp"},
+        "non_transitive": {"const": true}
+      }
+    },
+    "authorityGrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "authority_grant_id", "holder_subject_id", "issuer_authority_grant_id", "capabilities", "claim_types", "method_classes", "tier", "basis", "issued_at", "expires_at", "usage_cap", "used_count", "can_delegate", "delegation_depth", "max_delegation_depth", "public_accountability_label", "revoked_at", "revocation_reason"],
+      "properties": {
+        "record_type": {"const": "authority_grant"},
+        "authority_grant_id": {"type": "string", "pattern": "^agr_[A-Za-z0-9_-]{8,120}$"},
+        "holder_subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "issuer_authority_grant_id": {"type": ["string", "null"], "pattern": "^agr_[A-Za-z0-9_-]{8,120}$"},
+        "capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/authorityCapability"}},
+        "claim_types": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^(\\*|[a-z][a-z0-9_]{2,119})$"}},
+        "method_classes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^(\\*|[a-z][a-z0-9_]{2,79})$"}},
+        "tier": {"$ref": "#/$defs/authorityTier"},
+        "basis": {"$ref": "#/$defs/authorityBasis"},
+        "issued_at": {"$ref": "#/$defs/timestamp"},
+        "expires_at": {"$ref": "#/$defs/timestamp"},
+        "usage_cap": {"type": ["integer", "null"], "minimum": 1},
+        "used_count": {"type": "integer", "minimum": 0},
+        "can_delegate": {"type": "boolean"},
+        "delegation_depth": {"type": "integer", "minimum": 0, "maximum": 16},
+        "max_delegation_depth": {"type": "integer", "minimum": 0, "maximum": 16},
+        "public_accountability_label": {"type": ["string", "null"], "maxLength": 120},
+        "revoked_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+        "revocation_reason": {"type": ["string", "null"], "maxLength": 100}
+      }
+    },
+    "authorityPromotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "promotion_id", "subject_id", "source_authority_grant_ids", "resulting_authority_grant_id", "prior_tier", "resulting_tier", "passed_audit_ids", "decided_by_authority_grant_id", "decided_at"],
+      "properties": {
+        "record_type": {"const": "authority_promotion"},
+        "promotion_id": {"type": "string", "pattern": "^prm_[A-Za-z0-9_-]{8,120}$"},
+        "subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "source_authority_grant_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^agr_[A-Za-z0-9_-]{8,120}$"}},
+        "resulting_authority_grant_id": {"type": "string", "pattern": "^agr_[A-Za-z0-9_-]{8,120}$"},
+        "prior_tier": {"$ref": "#/$defs/authorityTier"},
+        "resulting_tier": {"$ref": "#/$defs/authorityTier"},
+        "passed_audit_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^aud_[A-Za-z0-9_-]{8,120}$"}},
+        "decided_by_authority_grant_id": {"type": "string", "pattern": "^agr_[A-Za-z0-9_-]{8,120}$"},
+        "decided_at": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "attestation_id", "request_id", "grant_id", "verifier_subject_id", "independence_path", "method_class", "issued_at", "expires_at", "verification_basis", "state", "invalidation_reason"],
+      "properties": {
+        "record_type": {"const": "attestation"},
+        "attestation_id": {"type": "string", "pattern": "^att_[A-Za-z0-9_-]{8,120}$"},
+        "request_id": {"type": "string", "pattern": "^clm_[A-Za-z0-9_-]{8,120}$"},
+        "grant_id": {"type": "string", "pattern": "^(grt|agr)_[A-Za-z0-9_-]{8,120}$"},
+        "verifier_subject_id": {"type": "string", "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"},
+        "independence_path": {"type": "string", "pattern": "^path_[A-Za-z0-9_-]{4,120}$"},
+        "method_class": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,79}$"},
+        "issued_at": {"$ref": "#/$defs/timestamp"},
+        "expires_at": {"$ref": "#/$defs/timestamp"},
+        "verification_basis": {"$ref": "#/$defs/verificationBasis"},
+        "state": {"enum": ["active", "invalidated", "expired"]},
+        "invalidation_reason": {"type": ["string", "null"], "maxLength": 100}
+      }
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "audit_id", "attestation_id", "basis", "selection_receipt", "selected_at", "state", "decided_at"],
+      "properties": {
+        "record_type": {"const": "audit"},
+        "audit_id": {"type": "string", "pattern": "^aud_[A-Za-z0-9_-]{8,120}$"},
+        "attestation_id": {"type": "string", "pattern": "^att_[A-Za-z0-9_-]{8,120}$"},
+        "basis": {"enum": ["random", "risk"]},
+        "selection_receipt": {"type": "string", "pattern": "^sel_[A-Za-z0-9_-]{32,120}$"},
+        "selected_at": {"$ref": "#/$defs/timestamp"},
+        "state": {"enum": ["pending", "passed", "failed"]},
+        "decided_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]}
+      }
+    },
+    "challenge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "challenge_id", "attestation_id", "reason_code", "opened_at", "state", "response_code", "decision", "appeal_reason_code", "appeal_decision", "decided_at", "challenger_subject_id"],
+      "properties": {
+        "record_type": {"const": "challenge"},
+        "challenge_id": {"type": "string", "pattern": "^chg_[A-Za-z0-9_-]{8,120}$"},
+        "attestation_id": {"type": "string", "pattern": "^att_[A-Za-z0-9_-]{8,120}$"},
+        "reason_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,99}$"},
+        "opened_at": {"$ref": "#/$defs/timestamp"},
+        "state": {"enum": ["open", "responded", "decided", "appealed", "closed"]},
+        "response_code": {"type": ["string", "null"], "maxLength": 100},
+        "decision": {"enum": ["dismissed", "sustained", null]},
+        "appeal_reason_code": {"type": ["string", "null"], "maxLength": 100},
+        "appeal_decision": {"enum": ["affirmed", "reversed", null]},
+        "decided_at": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+        "challenger_subject_id": {"type": ["string", "null"], "pattern": "^sub_[A-Za-z0-9_-]{8,120}$"}
+      }
+    },
+    "credential": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "credential_id", "request_id", "claim", "state", "dependency_attestation_ids", "issued_at", "expires_at", "status_reference", "updated_at", "verification_bases"],
+      "properties": {
+        "record_type": {"const": "credential"},
+        "credential_id": {"type": "string", "pattern": "^crd_[A-Za-z0-9_-]{8,120}$"},
+        "request_id": {"type": "string", "pattern": "^clm_[A-Za-z0-9_-]{8,120}$"},
+        "claim": {"$ref": "#/$defs/claimDefinition"},
+        "state": {"enum": ["provisional", "active", "suspended", "revoked", "expired"]},
+        "dependency_attestation_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^att_[A-Za-z0-9_-]{8,120}$"}},
+        "issued_at": {"$ref": "#/$defs/timestamp"},
+        "expires_at": {"$ref": "#/$defs/timestamp"},
+        "status_reference": {"type": "string", "format": "uri"},
+        "updated_at": {"$ref": "#/$defs/timestamp"},
+        "verification_bases": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/verificationBasis"}}
+      }
+    },
+    "credentialStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "status_reference", "state", "updated_at"],
+      "properties": {
+        "record_type": {"const": "credential_status"},
+        "status_reference": {"type": "string", "format": "uri"},
+        "state": {"enum": ["provisional", "active", "suspended", "revoked", "expired"]},
+        "updated_at": {"$ref": "#/$defs/timestamp"}
+      }
+    },
+    "publicEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "event_id", "event_type", "aggregate_type", "occurred_at", "policy_profile", "public_attributes"],
+      "properties": {
+        "record_type": {"const": "public_event"},
+        "event_id": {"type": "string", "pattern": "^evt_[A-Za-z0-9_-]{8,120}$"},
+        "event_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"},
+        "aggregate_type": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,99}$"},
+        "occurred_at": {"$ref": "#/$defs/timestamp"},
+        "policy_profile": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{2,99}$"},
+        "public_attributes": {"type": "object", "maxProperties": 12, "additionalProperties": {"type": ["string", "number", "integer", "boolean", "null"]}}
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_type", "receipt_id", "operation", "outcome", "occurred_at", "event_id", "policy_profile"],
+      "properties": {
+        "record_type": {"const": "receipt"},
+        "receipt_id": {"type": "string", "pattern": "^rcp_[A-Za-z0-9_-]{32,120}$"},
+        "operation": {"type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"},
+        "outcome": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,79}$"},
+        "occurred_at": {"$ref": "#/$defs/timestamp"},
+        "event_id": {"type": "string", "pattern": "^evt_[A-Za-z0-9_-]{8,120}$"},
+        "policy_profile": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{2,99}$"}
+      }
+    }
+  }
+}
