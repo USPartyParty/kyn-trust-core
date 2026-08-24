@@ -55,10 +55,10 @@ def released_core() -> tuple[TrustCore, str, str]:
     )
     core.register_operator_release(
         actor_authority_grant_id=root.authority_grant_id,
-        release_version="1.0.0",
-        notice_version="1.0.0",
-        terms_url="https://usparty.party/kyn/terms/1.0.0",
-        privacy_url="https://usparty.party/kyn/privacy/1.0.0",
+        release_version="2.0.0",
+        notice_version="2.0.0",
+        terms_url="https://usparty.party/kyn/terms/2.0.0",
+        privacy_url="https://usparty.party/kyn/privacy/2.0.0",
         operator_contact="privacy@usparty.party",
         storage_posture=StoragePosture.PROVISIONAL_BETA,
         backup_evidence_reference="sha256:" + "b" * 64,
@@ -66,7 +66,7 @@ def released_core() -> tuple[TrustCore, str, str]:
     )
     core.accept_consent(
         subject_id=kc.subject_id,
-        notice_version="1.0.0",
+        notice_version="2.0.0",
         purposes=frozenset({"kyn_claim_processing", "kyn_recovery"}),
     )
     return core, kc.subject_id, root.authority_grant_id
@@ -79,7 +79,7 @@ def test_release_consent_and_recovery_rotate_only_the_key_binding() -> None:
     )
     core.accept_consent(
         subject_id=participant.subject_id,
-        notice_version="1.0.0",
+        notice_version="2.0.0",
         purposes=frozenset({"kyn_claim_processing", "kyn_recovery"}),
     )
     recovery_material = "a-high-entropy-user-held-recovery-secret-0001"

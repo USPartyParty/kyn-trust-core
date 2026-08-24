@@ -192,7 +192,9 @@ class TrustCore:
         self, participant_key: str, *, bootstrap: bool = False
     ) -> tuple[Subject, Receipt]:
         if self.policy.enforce_release and not bootstrap:
-            self._require_active_release()
+            release = self.current_operator_release()
+            if release is None or release.release_version != "2.0.0":
+                raise TrustCoreError("ordinary enrollment is not active")
         if not participant_key.startswith("did:key:"):
             raise TrustCoreError("participant key must use did:key")
         if any(subject.participant_key == participant_key for subject in self._subjects.values()):
