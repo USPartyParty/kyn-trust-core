@@ -720,3 +720,152 @@ def test_authenticated_kyn_000c_peer_and_account_lifecycle_routes(tmp_path: Path
         )
         assert next_release["release_version"] == "1.1.0"
         assert next_release["supersedes_release_id"] == release.json()["release_id"]
+
+
+def test_ordinary_member_enrollment_snapshot_and_unlinkable_presentation(
+    tmp_path: Path,
+) -> None:
+    database_url = f"sqlite+aiosqlite:///{tmp_path / 'member.db'}"
+    prepare_database(database_url)
+    settings = Settings(
+        environment="integration",
+        database_url=database_url,
+        issuer="https://kyn.usparty.party",
+        signing_seed_file=write_secret(tmp_path / "signing.seed", b"s" * 32),
+        pairwise_secret_file=write_secret(tmp_path / "pairwise.secret", b"p" * 32),
+        receipt_secret_file=write_secret(tmp_path / "receipt.secret", b"r" * 32),
+        bootstrap_token_file=write_secret(tmp_path / "bootstrap.token", b"b" * 32),
+    )
+    root = Ed25519Signer.from_seed("member-root", b"k" * 32)
+    member = Ed25519Signer.from_seed("ordinary-member", b"m" * 32)
+    now = datetime.now(tz=UTC).replace(microsecond=0)
+
+    with TestClient(create_app(settings)) as client:
+        bootstrap_body = {
+            "participant_key": root.participant_key,
+            "public_label": "KC Streich",
+            "designation_reference": "sha256:" + "a" * 64,
+            "policy_version": "2.0.0",
+            "expires_at": (now + timedelta(days=365)).isoformat().replace("+00:00", "Z"),
+            "release_version": "2.0.0",
+            "notice_version": "2.0.0",
+            "terms_url": "https://usparty.party/kyn/terms/2.0.0",
+            "privacy_url": "https://usparty.party/kyn/privacy/2.0.0",
+            "operator_contact": "privacy@usparty.party",
+            "storage_posture": "provisional_beta",
+            "backup_evidence_reference": "sha256:" + "b" * 64,
+            "sensitive_evidence_enabled": False,
+        }
+        bootstrap = client.post(
+            "/v1/bootstrap/activate",
+            json=signed_payload(
+                root,
+                operation="authority.bootstrap_activate",
+                nonce="member-bootstrap-0001",
+                body=bootstrap_body,
+                now=now,
+            ),
+            headers={"Authorization": f"Bearer {(b'b' * 32).decode()}"},
+        )
+        assert bootstrap.status_code == 201, bootstrap.text
+
+        subject_body = {"participant_key": member.participant_key}
+        enrolled = client.post(
+            "/v1/subjects",
+            json=signed_payload(
+                member,
+                operation="subject.create",
+                nonce="member-enroll-000001",
+                body=subject_body,
+                now=now,
+            ),
+        )
+        assert enrolled.status_code == 201, enrolled.text
+        subject_id = next(
+            item["subject_id"]
+            for item in enrolled.json()["records"]
+            if item["record_type"] == "subject"
+        )
+
+        consent_body = {
+            "subject_id": subject_id,
+            "notice_version": "2.0.0",
+            "purposes": [
+                "kyn_campaign_member_ballot",
+                "kyn_recovery",
+            ],
+        }
+        consent = signed_payload(
+            member,
+            operation="consent.accept",
+            nonce="member-consent-00001",
+            body=consent_body,
+            now=now,
+        )
+        consent.pop("subject_id")
+        accepted = client.post(f"/v1/subjects/{subject_id}/consents", json=consent)
+        assert accepted.status_code == 201, accepted.text
+
+        snapshot = client.get("/v1/member-snapshot")
+        assert snapshot.status_code == 200, snapshot.text
+        assert snapshot.json()["eligible_member_count"] == 1
+        assert snapshot.json()["release_version"] == "2.0.0"
+        assert "subject" not in snapshot.text
+
+        presentation_body = {
+            "subject_id": subject_id,
+            "audience": "https://api.ai-for-wi.com/member-polls",
+            "determination_version_id": "018f3ca1-72b4-7d8e-8000-000000000001",
+            "manifest_hash": "sha256:" + "c" * 64,
+            "member_snapshot_digest": snapshot.json()["snapshot_digest"],
+            "member_snapshot_generated_at": snapshot.json()["generated_at"],
+            "expires_at": (now + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+        }
+        presented = client.post(
+            "/v1/member-presentations",
+            json=signed_payload(
+                member,
+                operation="member.presentation",
+                nonce="member-present-0001",
+                body=presentation_body,
+                now=now,
+            ),
+        )
+        assert presented.status_code == 201, presented.text
+        presentation = presented.json()["presentation"]
+        assert presentation["verification_basis"] == "self_asserted"
+        assert presentation["release_version"] == "2.0.0"
+        assert subject_id not in str(presentation)
+        assert member.participant_key not in str(presentation)
+
+        replayed = client.post(
+            "/v1/member-presentations",
+            json=signed_payload(
+                member,
+                operation="member.presentation",
+                nonce="member-present-0001",
+                body=presentation_body,
+                now=now,
+            ),
+        )
+        assert replayed.status_code == 201
+        assert replayed.json()["replayed"] is True
+        assert replayed.json()["presentation"] == presentation
+
+        other_body = {
+            **presentation_body,
+            "determination_version_id": "018f3ca1-72b4-7d8e-8000-000000000002",
+            "manifest_hash": "sha256:" + "d" * 64,
+        }
+        other = client.post(
+            "/v1/member-presentations",
+            json=signed_payload(
+                member,
+                operation="member.presentation",
+                nonce="member-present-0002",
+                body=other_body,
+                now=now,
+            ),
+        )
+        assert other.status_code == 201, other.text
+        assert other.json()["presentation"]["pairwise_subject"] != presentation["pairwise_subject"]

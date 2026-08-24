@@ -496,3 +496,67 @@ class CredentialPresentation:
             **self.signing_payload(),
             "proof": cast(dict[str, JsonValue], self.proof),
         }
+
+
+@dataclass(frozen=True, slots=True)
+class MemberSnapshot:
+    release_version: str
+    notice_version: str
+    eligible_member_count: int
+    generated_at: datetime
+    snapshot_digest: str
+    proof: dict[str, str]
+
+    def signing_payload(self) -> dict[str, JsonValue]:
+        return {
+            "release_version": self.release_version,
+            "notice_version": self.notice_version,
+            "eligible_member_count": self.eligible_member_count,
+            "generated_at": self.generated_at.isoformat().replace("+00:00", "Z"),
+            "snapshot_digest": self.snapshot_digest,
+        }
+
+    def as_dict(self) -> dict[str, JsonValue]:
+        return {
+            **self.signing_payload(),
+            "proof": cast(dict[str, JsonValue], self.proof),
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class MemberPresentation:
+    presentation_id: str
+    issuer: str
+    audience: str
+    pairwise_subject: str
+    determination_version_id: str
+    manifest_hash: str
+    member_snapshot_digest: str
+    release_version: str
+    verification_basis: str
+    issued_at: datetime
+    expires_at: datetime
+    receipt_id: str
+    proof: dict[str, str]
+
+    def signing_payload(self) -> dict[str, JsonValue]:
+        return {
+            "presentation_id": self.presentation_id,
+            "issuer": self.issuer,
+            "audience": self.audience,
+            "pairwise_subject": self.pairwise_subject,
+            "determination_version_id": self.determination_version_id,
+            "manifest_hash": self.manifest_hash,
+            "member_snapshot_digest": self.member_snapshot_digest,
+            "release_version": self.release_version,
+            "verification_basis": self.verification_basis,
+            "issued_at": self.issued_at.isoformat().replace("+00:00", "Z"),
+            "expires_at": self.expires_at.isoformat().replace("+00:00", "Z"),
+            "receipt_id": self.receipt_id,
+        }
+
+    def as_dict(self) -> dict[str, JsonValue]:
+        return {
+            **self.signing_payload(),
+            "proof": cast(dict[str, JsonValue], self.proof),
+        }

@@ -7,7 +7,7 @@ import hashlib
 import hmac
 from collections.abc import Callable
 from dataclasses import replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from kyn.contracts import from_record, to_record
@@ -39,6 +39,8 @@ from kyn.models import (
     CredentialState,
     CredentialStatus,
     Introduction,
+    MemberPresentation,
+    MemberSnapshot,
     OperatorRelease,
     PrivacyRequest,
     PrivacyRequestKind,
@@ -1282,6 +1284,143 @@ class TrustCore:
         )
         presentation = replace(unsigned, proof=self.signer.sign(unsigned.signing_payload()))
         return presentation, receipt
+
+    def member_snapshot(self) -> MemberSnapshot:
+        release = self.current_operator_release()
+        if release is None or release.release_version != "2.0.0":
+            raise TrustCoreError("ordinary member enrollment is not active")
+        generated_at = self._now()
+        eligible_subjects, snapshot_digest = self._member_snapshot_values(
+            release_version=release.release_version,
+            notice_version=release.notice_version,
+            at=generated_at,
+        )
+        unsigned = MemberSnapshot(
+            release_version=release.release_version,
+            notice_version=release.notice_version,
+            eligible_member_count=len(eligible_subjects),
+            generated_at=generated_at,
+            snapshot_digest=snapshot_digest,
+            proof={},
+        )
+        return replace(unsigned, proof=self.signer.sign(unsigned.signing_payload()))
+
+    def present_member(
+        self,
+        *,
+        subject_id: str,
+        audience: str,
+        determination_version_id: str,
+        manifest_hash: str,
+        member_snapshot_digest: str,
+        member_snapshot_generated_at: datetime,
+        requested_expires_at: datetime,
+    ) -> tuple[MemberPresentation, Receipt]:
+        release = self.current_operator_release()
+        if release is None or release.release_version != "2.0.0":
+            raise TrustCoreError("ordinary member ballot presentations are not active")
+        subject = self._require_subject(subject_id)
+        if subject.deleted_at is not None or subject.participant_key is None:
+            raise TrustCoreError("member subject is unavailable")
+        if not self._has_active_consent(subject_id, "kyn_campaign_member_ballot"):
+            raise TrustCoreError("member ballot consent is not active")
+        if not audience.startswith("https://"):
+            raise TrustCoreError("member presentation audience must use https")
+        if not manifest_hash.startswith("sha256:") or len(manifest_hash) != SHA256_REFERENCE_LENGTH:
+            raise TrustCoreError("member presentation requires the immutable manifest hash")
+        if (
+            member_snapshot_generated_at.tzinfo is None
+            or member_snapshot_generated_at.utcoffset() is None
+        ):
+            raise TrustCoreError("member snapshot time must be timezone aware")
+        snapshot_at = member_snapshot_generated_at.astimezone(UTC)
+        now = self._now()
+        if snapshot_at > now + timedelta(minutes=2) or now - snapshot_at > timedelta(days=8):
+            raise TrustCoreError("member snapshot is outside the accepted poll window")
+        eligible_subjects, expected_snapshot_digest = self._member_snapshot_values(
+            release_version=release.release_version,
+            notice_version=release.notice_version,
+            at=snapshot_at,
+        )
+        if (
+            member_snapshot_digest != expected_snapshot_digest
+            or subject_id not in eligible_subjects
+        ):
+            raise TrustCoreError("member subject was not eligible in the frozen snapshot")
+        if requested_expires_at.tzinfo is None or requested_expires_at.utcoffset() is None:
+            raise TrustCoreError("member presentation expiry must be timezone aware")
+        expires_at = min(requested_expires_at.astimezone(UTC), now + timedelta(minutes=10))
+        if expires_at <= now:
+            raise TrustCoreError("member presentation expiry must be in the future")
+        pairwise = _token(
+            "pws",
+            hmac.digest(
+                self._pairwise_secret,
+                (
+                    f"campaign-member|{subject_id}|{audience}|"
+                    f"{determination_version_id}|{manifest_hash}"
+                ).encode(),
+                "sha256",
+            ),
+        )
+        receipt = self._publish("member.presented", "issued", "member_presentation")
+        unsigned = MemberPresentation(
+            presentation_id=self._id("mpr"),
+            issuer=self.issuer,
+            audience=audience,
+            pairwise_subject=pairwise,
+            determination_version_id=determination_version_id,
+            manifest_hash=manifest_hash,
+            member_snapshot_digest=member_snapshot_digest,
+            release_version=release.release_version,
+            verification_basis="self_asserted",
+            issued_at=now,
+            expires_at=expires_at,
+            receipt_id=receipt.receipt_id,
+            proof={},
+        )
+        return replace(unsigned, proof=self.signer.sign(unsigned.signing_payload())), receipt
+
+    def _member_snapshot_values(
+        self,
+        *,
+        release_version: str,
+        notice_version: str,
+        at: datetime,
+    ) -> tuple[tuple[str, ...], str]:
+        eligible_subjects = tuple(
+            sorted(
+                subject.subject_id
+                for subject in self._subjects.values()
+                if subject.created_at <= at
+                and (subject.deleted_at is None or subject.deleted_at > at)
+                and any(
+                    consent.subject_id == subject.subject_id
+                    and consent.granted_at <= at
+                    and (consent.withdrawn_at is None or consent.withdrawn_at > at)
+                    and "kyn_campaign_member_ballot" in consent.purposes
+                    for consent in self._consents.values()
+                )
+            )
+        )
+        opaque_members = tuple(
+            _token(
+                "mem",
+                hmac.digest(
+                    self._pairwise_secret,
+                    f"member-snapshot|{release_version}|{subject_id}".encode(),
+                    "sha256",
+                ),
+            )
+            for subject_id in eligible_subjects
+        )
+        digest = (
+            "sha256:"
+            + hashlib.sha256(
+                "|".join((release_version, notice_version, *opaque_members)).encode()
+            ).hexdigest()
+        )
+        return eligible_subjects, digest
 
     def public_events(self) -> tuple[PublicEvent, ...]:
         return tuple(self._events)

@@ -14,8 +14,9 @@ foundation: explicit verification bases, accountable authority tiers and grants,
 participant-signed commands, a one-time KC bootstrap, durable PostgreSQL state,
 idempotent command receipts, and an authenticated HTTP service. KYN-000C completes
 the release, consent, peer-attestation, audit, challenge/appeal, recovery, privacy,
-and portal paths in source. Source completion is not evidence that a live service or
-poll has been opened.
+and portal paths. MEM-001 adds production-path ordinary-member snapshots and
+determination-specific pairwise presentations while preserving KYN/campaign/ballot
+separation. Source completion is not evidence that enrollment or a poll is live.
 
 ## Core promise
 
@@ -41,6 +42,8 @@ poll has been opened.
   explicit KC activation runbook
 - `docs/POLICY_PARAMETERS.md`: unresolved pilot values and acceptance state
 - `docs/OPERATOR_RELYING_PARTY_AGREEMENT.md`: exact Gate B organizational and data boundary
+- `docs/MEM-001_ORDINARY_MEMBER_RELEASE.md`: exact ordinary-member release,
+  limitations, campaign use, recovery, rollback, and acceptance
 - `docs/KC_GATE_B_DESIGNATION.md`: exact one-subject bootstrap meaning and limits
 - `docs/adr/`: accepted architecture decisions
 - `schemas/`: public interoperability contracts
@@ -79,15 +82,20 @@ The bounded one-subject Gate B release is `production-accepted`. A real KC recov
 request rotated the participant key, retired the prior key, consumed the original
 commitment, and established a new secret-service-backed commitment. A real export
 privacy request was approved, remained subject-scoped, and persisted no export.
-Post-acceptance encrypted backup and isolated restore passed. This acceptance
-authorizes no sensitive evidence, ordinary public enrollment, verified-Wisconsin
-claim, binding or determining poll, or durable-production claim. Backup failure,
-inability to restore, unexpected exposure, or loss of separation stops the beta.
+Post-acceptance encrypted backup and isolated restore passed.
 
-No fake participant records may be seeded into a live environment. KC is the only
-permitted first bootstrap subject. Later participants must enter through real,
-consented journeys after a separate Gate C opening decision. Deterministic keys and
-secrets in tests are public test material and must never be reused.
+MEM-001 release `2.0.0` is accepted for implementation but is not active. Its source
+opens pseudonymous self-service campaign membership without per-member approval and
+adds signed eligible-count snapshots plus short-lived determination-specific
+presentations. One poll authorization means one KYN subject, not proven
+one-natural-person uniqueness. No sensitive evidence, verified-Wisconsin claim,
+representative result, statutory meaning, or member-submitted question is
+authorized.
+
+No fake participant records may be seeded into a live environment. Later
+participants must enter through real, consented journeys after exact release
+activation. Deterministic keys and secrets in tests are public test material and
+must never be reused.
 
 ## Verify
 

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kyn.usparty.party/schemas/member-poll.schema.json",
+  "title": "KYN ordinary-member poll boundary",
+  "oneOf": [
+    { "$ref": "#/$defs/memberSnapshot" },
+    { "$ref": "#/$defs/memberPresentation" }
+  ],
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "key_id", "value"],
+      "properties": {
+        "type": { "const": "Ed25519Signature2020" },
+        "key_id": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{86}$" }
+      }
+    },
+    "memberSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["release_version", "notice_version", "eligible_member_count", "generated_at", "snapshot_digest", "proof"],
+      "properties": {
+        "release_version": { "const": "2.0.0" },
+        "notice_version": { "const": "2.0.0" },
+        "eligible_member_count": { "type": "integer", "minimum": 0 },
+        "generated_at": { "$ref": "#/$defs/timestamp" },
+        "snapshot_digest": { "$ref": "#/$defs/hash" },
+        "proof": { "$ref": "#/$defs/proof" }
+      }
+    },
+    "memberPresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["presentation_id", "issuer", "audience", "pairwise_subject", "determination_version_id", "manifest_hash", "member_snapshot_digest", "release_version", "verification_basis", "issued_at", "expires_at", "receipt_id", "proof"],
+      "properties": {
+        "presentation_id": { "type": "string", "pattern": "^mpr_[A-Za-z0-9_-]{8,120}$" },
+        "issuer": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "audience": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "pairwise_subject": { "type": "string", "pattern": "^pws_[A-Za-z0-9_-]{32,160}$" },
+        "determination_version_id": { "type": "string", "format": "uuid" },
+        "manifest_hash": { "$ref": "#/$defs/hash" },
+        "member_snapshot_digest": { "$ref": "#/$defs/hash" },
+        "release_version": { "const": "2.0.0" },
+        "verification_basis": { "const": "self_asserted" },
+        "issued_at": { "$ref": "#/$defs/timestamp" },
+        "expires_at": { "$ref": "#/$defs/timestamp" },
+        "receipt_id": { "type": "string", "pattern": "^rcp_[A-Za-z0-9_-]{32,160}$" },
+        "proof": { "$ref": "#/$defs/proof" }
+      }
+    }
+  }
+}
