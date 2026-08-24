@@ -71,7 +71,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="Know Your Neighbor Trust Core",
-        version="0.3.0",
+        version="0.4.0",
         docs_url=None if resolved.environment == "production" else "/docs",
         openapi_url=None if resolved.environment == "production" else "/openapi.json",
         redoc_url=None,

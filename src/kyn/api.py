@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any, cast
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -77,6 +78,17 @@ class RegisterClaimInput(StrictModel):
     minimum_attestations: int = Field(ge=0)
     minimum_independent_paths: int = Field(ge=0)
     minimum_passed_audits: int = Field(ge=0)
+    proof: ActionProof
+
+
+class MemberPresentationInput(StrictModel):
+    subject_id: str = Field(pattern=r"^sub_[A-Za-z0-9_-]{8,120}$")
+    audience: str = Field(pattern=r"^https://", max_length=500)
+    determination_version_id: UUID
+    manifest_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    member_snapshot_digest: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    member_snapshot_generated_at: datetime
+    expires_at: datetime
     proof: ActionProof
 
 
@@ -322,6 +334,59 @@ async def create_subject(payload: CreateSubjectInput, request: Request) -> dict[
         transition=transition,
     )
     return _response(result)
+
+
+@router.get("/member-snapshot")
+async def get_member_snapshot(request: Request) -> dict[str, JsonValue]:
+    core = await _service(request).load_core()
+    return core.member_snapshot().as_dict()
+
+
+@router.post("/member-presentations", status_code=status.HTTP_201_CREATED)
+async def create_member_presentation(
+    payload: MemberPresentationInput,
+    request: Request,
+) -> dict[str, Any]:
+    service = _service(request)
+    core = await service.load_core()
+    operation = "member.presentation"
+    action = await _authorize(
+        request,
+        participant_key=core.participant_key_for_subject(payload.subject_id),
+        operation=operation,
+        model=payload,
+    )
+
+    def transition(state: TrustCore) -> TransitionResult:
+        presentation, receipt = state.present_member(
+            subject_id=payload.subject_id,
+            audience=payload.audience,
+            determination_version_id=str(payload.determination_version_id),
+            manifest_hash=payload.manifest_hash,
+            member_snapshot_digest=payload.member_snapshot_digest,
+            member_snapshot_generated_at=payload.member_snapshot_generated_at,
+            requested_expires_at=payload.expires_at,
+        )
+        return TransitionResult(
+            records=(),
+            receipt=receipt,
+            response_payload=cast(dict[str, object], presentation.as_dict()),
+        )
+
+    result = await service.execute(
+        command_id=action.command_id,
+        operation=operation,
+        actor_reference=action.actor_reference,
+        request_payload=_body(payload),
+        transition=transition,
+    )
+    if result.response_payload is None:
+        raise RuntimeError("member presentation response is unavailable")
+    return {
+        "presentation": result.response_payload,
+        "receipt": to_record(result.receipt),
+        "replayed": result.replayed,
+    }
 
 
 @router.post("/bootstrap/activate", status_code=status.HTTP_201_CREATED)

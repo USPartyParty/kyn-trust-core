@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Know Your Neighbor Trust Core API",
-    "version": "0.3.0",
-    "description": "KYN-000C public-beta contract. Mutations require body-bound participant proof of key control; root activation additionally requires the one-time operator bootstrap credential. Live peer attestations require an approved introduction. Source completeness does not represent deployment or real-participant enrollment."
+    "version": "0.4.0",
+    "description": "KYN 2.0 ordinary-member contract. Mutations require body-bound participant proof of key control; root activation additionally requires the retired one-time operator bootstrap credential. Ordinary enrollment uses no per-member approval. Member snapshots and determination-specific presentations disclose no KYN subject list or private graph. Source completeness does not represent deployment, enrollment, or a live ballot."
   },
   "servers": [{"url": "https://kyn.usparty.party"}],
   "paths": {
@@ -29,6 +29,20 @@
         "security": [{"participantActionProof": []}],
         "requestBody": {"$ref": "#/components/requestBodies/CreateSubject"},
         "responses": {"201": {"$ref": "#/components/responses/OperationResult"}}
+      }
+    },
+    "/v1/member-snapshot": {
+      "get": {
+        "operationId": "getMemberSnapshot",
+        "responses": {"200": {"description": "Signed eligible campaign-member count and snapshot digest without a subject list"}}
+      }
+    },
+    "/v1/member-presentations": {
+      "post": {
+        "operationId": "createMemberPresentation",
+        "security": [{"participantActionProof": []}],
+        "requestBody": {"$ref": "#/components/requestBodies/SignedCommand"},
+        "responses": {"201": {"description": "Determination-specific pairwise member presentation and private receipt"}}
       }
     },
     "/v1/subjects/{subject_id}/consents": {

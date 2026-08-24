@@ -16,6 +16,10 @@ review before they become live policy.
 | Live seed data | prohibited | no fictional participants or attestations in a live environment; deterministic fixtures remain test-only |
 | Universal social score | prohibited | no numeric or global reputation score |
 | Ballot identity | accepted | ballot-scoped one-time authorization/nullifier |
+| Ordinary campaign-member release | accepted for MEM-001 source | release `2.0.0`, participant-controlled pseudonymous enrollment, exact ballot-purpose consent, no per-member operator approval, no sensitive evidence |
+| Member uniqueness meaning | accepted for MEM-001 | one KYN subject receives one poll-specific nullifier; no natural-person uniqueness claim; limitation published with every result |
+| Member snapshot disclosure | accepted for MEM-001 | signed eligible count and digest only; no subject list crosses to the campaign |
+| Binding campaign use | accepted for MEM-001 | campaign-seeded initial positions only under the exact seven-day AIWI precommitment; no post-result candidate veto |
 | Phase 2 claim vocabulary | pending | community-corroborated Wisconsin connection; unique pilot participant |
 | Corroboration and independence | pending | two independent paths by default; household and circularity rules require acceptance |
 | Audit sample and escalation rates | pending | publish before pilot; combine random and risk-based selection |
@@ -42,3 +46,13 @@ commands, the single KC bootstrap, accountable peer paths, and durable state. It
 does not silently accept the pending claim, concentration, retention, or poll
 parameters above. A deployed instance must register exact claim definitions and
 accepted assurance bases through an authorized, receipted command.
+
+## MEM-001 ordinary-member release
+
+Release `2.0.0` uses the same fail-closed production-path state machine while adding
+a signed eligible-member snapshot and short-lived determination-specific member
+presentation. The accepted member consent purpose is
+`kyn_campaign_member_ballot`. The release creates no verifier authority, verified
+Wisconsin claim, statutory meaning, representative sample, sensitive evidence, or
+natural-person uniqueness claim. Exact scope, rollback, and acceptance are recorded
+in `MEM-001_ORDINARY_MEMBER_RELEASE.md`.
