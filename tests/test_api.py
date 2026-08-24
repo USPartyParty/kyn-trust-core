@@ -351,10 +351,10 @@ def test_authenticated_kyn_000c_peer_and_account_lifecycle_routes(tmp_path: Path
             "designation_reference": "sha256:" + "a" * 64,
             "policy_version": "1.0.0",
             "expires_at": (now + timedelta(days=365)).isoformat().replace("+00:00", "Z"),
-            "release_version": "1.0.0",
-            "notice_version": "1.0.0",
-            "terms_url": "https://usparty.party/kyn/terms/1.0.0",
-            "privacy_url": "https://usparty.party/kyn/privacy/1.0.0",
+            "release_version": "2.0.0",
+            "notice_version": "2.0.0",
+            "terms_url": "https://usparty.party/kyn/terms/2.0.0",
+            "privacy_url": "https://usparty.party/kyn/privacy/2.0.0",
             "operator_contact": "privacy@usparty.party",
             "storage_posture": "provisional_beta",
             "backup_evidence_reference": "sha256:" + "b" * 64,
@@ -385,7 +385,7 @@ def test_authenticated_kyn_000c_peer_and_account_lifecycle_routes(tmp_path: Path
         participant_id = create_subject(participant)
         verifier_id = create_subject(verifier)
         consent_body = {
-            "notice_version": "1.0.0",
+            "notice_version": "2.0.0",
             "purposes": ["kyn_claim_processing", "kyn_recovery"],
         }
         consent_signed = signed(
