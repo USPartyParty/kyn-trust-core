@@ -131,7 +131,7 @@ services:
       - kyn_api
       - kyn_data
     ports:
-      - "127.0.0.1:${KYN_LOOPBACK_PORT:-8090}:8090"
+      - "${KYN_PUBLISH_ADDRESS:-127.0.0.1}:${KYN_LOOPBACK_PORT:-8090}:8090"
     depends_on:
       kyn-migrate:
         condition: service_completed_successfully
