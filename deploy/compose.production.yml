@@ -33,7 +33,7 @@ x-kyn-environment: &kyn-environment
 services:
   kyn-provision:
     profiles: ["tools"]
-    image: kyn:0.3.0
+    image: kyn:0.4.0
     build:
       context: ..
       dockerfile: Containerfile
@@ -96,7 +96,7 @@ services:
 
   kyn-migrate:
     <<: *service-security
-    image: kyn:0.3.0
+    image: kyn:0.4.0
     build:
       context: ..
       dockerfile: Containerfile
@@ -116,7 +116,7 @@ services:
 
   kyn-api:
     <<: *service-security
-    image: kyn:0.3.0
+    image: kyn:0.4.0
     build:
       context: ..
       dockerfile: Containerfile
