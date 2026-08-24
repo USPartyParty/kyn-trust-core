@@ -204,7 +204,23 @@ passed isolated restore. Evidence SHA-256 is
 Public-safe activation, rotation, restore, and consent/recovery evidence is under
 `docs/evidence/`.
 
-The lifecycle state is `deployed`, not `production-accepted`. Recovery-request and
-privacy-request human exercises remain. No claim definition, credential, additional
-subject, ordinary enrollment, public KYN ingress, poll, ballot, or sensitive evidence
-is active. HTTPS participant ingress and portal enrollment remain Gate C work.
+Gate B reached `production-accepted` for the exact one-subject scope on
+`2026-08-24`. KC completed a real recovery request and accountable approval; the
+replacement key became active, the prior key retired, and replacement recovery
+commitment `rcm_00000002` is backed by a new secret held only in the desktop secret
+service. KC then completed an approved export privacy request. The six-record export
+was subject-scoped and was not persisted to disk.
+
+Post-acceptance encrypted snapshot
+`b042dff1ad0b9d2234fae3a4427be37de12a7464af942094b2a364ec5c4a685c`
+contains nine replay-safe commands and passed isolated restore. The first restore
+attempt failed because the isolated PostgreSQL instance did not become ready; the
+exact image then started under a bounded diagnostic and a controlled retry passed
+snapshot lookup, database restore, migration/digest match, record-count match, and
+service-secret archive validation without touching the source database. See
+`docs/evidence/kyn-gate-b-human-acceptance-20260824.json`.
+
+No claim definition, credential, additional subject, ordinary enrollment, public
+KYN ingress, poll, ballot, or sensitive evidence is active. HTTPS participant
+ingress and portal enrollment remain Gate C work and require a separate opening
+decision.

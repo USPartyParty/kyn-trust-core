@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "status": "passed",
+  "lifecycle_state": "production-accepted",
+  "accepted_at": "2026-08-24T02:30:13Z",
+  "accepted_scope": "one KC-controlled bootstrap_vouched subject under release 1.0.0",
+  "authority": {
+    "operator": "KC Streich",
+    "authorization": "Explicit request to complete KYN Gate B recovery/privacy human acceptance",
+    "subject_id": "sub_00000001",
+    "authority_grant_id": "agr_00000001"
+  },
+  "source": {
+    "repository": "USPartyParty/kyn-trust-core",
+    "revision": "8058ce7ac0d36f3a8dda140d735cbb28276a410d",
+    "image_id": "sha256:4fcba960fcf43c13d6a7813c8d96b4df607a57808139a4abf9b9d798528b07ed",
+    "migration": {
+      "version": "0001_kyn_000b_state.sql",
+      "sha256": "sha256:9e02acee4fbd16946973e8e17b274deab749b3b71c8d4fda188164e91e592ba2"
+    }
+  },
+  "pre_acceptance_backup": {
+    "status": "passed",
+    "completed_at": "2026-08-24T02:16:32Z",
+    "snapshot_id": "82457006f3eb72d58e322adfab22237618cfc9e7c3249b267a6e6d56ccba08a4",
+    "encrypted": true,
+    "off_device": true,
+    "repository_scope": "pi_kyn_only"
+  },
+  "recovery": {
+    "case_id": "rcv_00000001",
+    "state": "approved",
+    "request_receipt_id": "rcp_6NrRvg3uFWWB0cUg_O3nGJrNdfHDwU2LzX7m4VGXHME",
+    "decision_receipt_id": "rcp_aeA8fVkTZnhc9282hUt7DBSlIaG4XBHBpoCaBPjxado",
+    "prior_key_digest": "sha256:0484d5d1370f628e525d4be6cc9f289dca918120827317c2441e124f0aa0b575",
+    "replacement_key_digest": "sha256:c5fe80eb42bca0ac44ba90e30969887f76f4c558fefc0e026c0a096fb06e1001",
+    "replacement_key_active": true,
+    "prior_key_retired": true,
+    "new_recovery_commitment_id": "rcm_00000002",
+    "new_recovery_secret_stored_in_desktop_secret_service": true
+  },
+  "privacy": {
+    "request_id": "prv_00000001",
+    "kind": "export",
+    "state": "completed",
+    "request_receipt_id": "rcp_9MnLu5D6lbPeMgR4kdptMOekmFICjJsk7RLQPEyIsVA",
+    "decision_receipt_id": "rcp_uSocBSOmWaAac5OEnuwCKUJuoTO73T8bOKdNsA5flrU",
+    "export_receipt_id": "rcp_0-Q5VR8s2FROMxn5yCtzSAplU5Aufzs7jTO0P9LLAh4",
+    "export_subject_scoped": true,
+    "export_record_count": 6,
+    "export_record_types": [
+      "authority_grant",
+      "consent_record",
+      "privacy_request",
+      "recovery_case",
+      "recovery_commitment",
+      "subject"
+    ],
+    "export_persisted_to_disk": false
+  },
+  "post_acceptance_backup": {
+    "status": "passed",
+    "completed_at": "2026-08-24T02:27:50Z",
+    "snapshot_id": "b042dff1ad0b9d2234fae3a4427be37de12a7464af942094b2a364ec5c4a685c",
+    "encrypted": true,
+    "off_device": true,
+    "record_counts": {
+      "kyn_state": 1,
+      "kyn_commands": 9
+    }
+  },
+  "isolated_restore": {
+    "status": "passed_after_controlled_retry",
+    "first_attempt": {
+      "status": "failed",
+      "reason": "isolated PostgreSQL did not become ready"
+    },
+    "diagnostic": {
+      "exact_postgresql_image_started": true,
+      "source_database_touched": false
+    },
+    "retry": {
+      "status": "passed",
+      "completed_at": "2026-08-24T02:30:13Z",
+      "snapshot_id": "b042dff1ad0b9d2234fae3a4427be37de12a7464af942094b2a364ec5c4a685c",
+      "source_database_untouched": true,
+      "migration_match": "passed",
+      "record_count_match": "passed",
+      "service_secret_archive_catalog": "passed"
+    }
+  },
+  "final_record_counts": {
+    "subject": 1,
+    "bootstrap_authority": 1,
+    "authority_grant": 1,
+    "operator_release": 1,
+    "consent_record": 1,
+    "recovery_case": 1,
+    "recovery_commitment": 2,
+    "privacy_request": 1,
+    "public_event": 11,
+    "receipt": 11
+  },
+  "boundaries": {
+    "ordinary_enrollment_open": false,
+    "additional_subjects": 0,
+    "claims": 0,
+    "credentials": 0,
+    "polls": 0,
+    "ballots": 0,
+    "sensitive_evidence_enabled": false,
+    "gate_c_open": false
+  }
+}
